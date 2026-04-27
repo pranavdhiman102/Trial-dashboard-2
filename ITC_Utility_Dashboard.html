@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ITC Haridwar — Utility Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg-0:#0a0e1a;
+  --bg-1:#0f1424;
+  --bg-2:#161b30;
+  --bg-3:#1d2340;
+  --line:#2a3158;
+  --text:#e8ecff;
+  --text-dim:#8892b8;
+  --text-faint:#5a6489;
+
+  --accent:#7df9ff;        /* cyan electric */
+  --accent-2:#a78bfa;      /* violet */
+  --accent-3:#f472b6;      /* pink */
+  --accent-4:#fbbf24;      /* amber */
+  --accent-5:#34d399;      /* emerald */
+  --accent-6:#fb7185;      /* rose */
+  --accent-7:#60a5fa;      /* sky */
+
+  --grad-1:linear-gradient(135deg,#7df9ff 0%,#a78bfa 50%,#f472b6 100%);
+  --grad-2:linear-gradient(135deg,#34d399 0%,#7df9ff 100%);
+  --grad-3:linear-gradient(135deg,#fbbf24 0%,#fb7185 100%);
+  --grad-4:linear-gradient(135deg,#a78bfa 0%,#60a5fa 100%);
+
+  --card:rgba(22,27,48,0.6);
+  --card-border:rgba(125,249,255,0.08);
+  --card-glow:0 0 0 1px rgba(125,249,255,0.06), 0 20px 50px -20px rgba(0,0,0,0.5);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg-0);color:var(--text);font-family:'Outfit',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ========= ATMOSPHERIC BACKGROUND ========= */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(125,249,255,0.08), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 20%, rgba(167,139,250,0.10), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, rgba(244,114,182,0.06), transparent 60%);
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.025;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.grid-bg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(125,249,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125,249,255,0.04) 1px, transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 80%);
+}
+
+/* ========= LAYOUT ========= */
+.shell{position:relative;z-index:1;max-width:1600px;margin:0 auto;padding:32px 36px 80px}
+
+/* ========= HEADER ========= */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:32px;
+  padding:20px 28px;margin-bottom:28px;
+  background:linear-gradient(180deg, rgba(22,27,48,0.8), rgba(15,20,36,0.4));
+  border:1px solid var(--card-border);
+  border-radius:24px;
+  backdrop-filter:blur(20px);
+  position:relative;overflow:hidden;
+}
+.topbar::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent, rgba(125,249,255,0.04), transparent);
+  animation:sweep 8s linear infinite;
+}
+@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+
+.brand{display:flex;align-items:center;gap:18px;position:relative;z-index:1}
+.logo{
+  width:56px;height:56px;border-radius:16px;
+  background:var(--grad-1);
+  display:grid;place-items:center;
+  font-family:'Instrument Serif',serif;font-size:30px;font-style:italic;color:#0a0e1a;font-weight:600;
+  box-shadow:0 0 30px rgba(125,249,255,0.4), inset 0 0 0 1px rgba(255,255,255,0.2);
+  position:relative;
+}
+.logo::after{
+  content:'';position:absolute;inset:-3px;border-radius:18px;
+  background:var(--grad-1);filter:blur(12px);opacity:0.4;z-index:-1;
+}
+.brand-text h1{
+  font-family:'Instrument Serif',serif;font-weight:400;font-size:30px;line-height:1;letter-spacing:-0.5px;
+}
+.brand-text h1 em{font-style:italic;background:var(--grad-1);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand-text p{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:2.5px;margin-top:6px;font-weight:500}
+
+.top-actions{display:flex;gap:10px;align-items:center;position:relative;z-index:1}
+
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 18px;border-radius:12px;border:1px solid var(--card-border);
+  background:rgba(22,27,48,0.6);color:var(--text);
+  font-family:inherit;font-size:13px;font-weight:500;letter-spacing:0.3px;
+  cursor:pointer;transition:all 0.25s cubic-bezier(.4,0,.2,1);
+  white-space:nowrap;
+}
+.btn:hover{border-color:var(--accent);background:rgba(125,249,255,0.06);transform:translateY(-1px);box-shadow:0 8px 20px -8px rgba(125,249,255,0.4)}
+.btn-primary{background:var(--grad-1);color:#0a0e1a;border:none;font-weight:600}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px -8px rgba(125,249,255,0.6)}
+.btn svg{width:16px;height:16px}
+
+/* ========= FILTER BAR ========= */
+.filter-bar{
+  display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+  padding:18px 22px;margin-bottom:24px;
+  background:var(--card);border:1px solid var(--card-border);border-radius:18px;
+  backdrop-filter:blur(20px);
+}
+.filter-group{display:flex;align-items:center;gap:10px}
+.filter-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-faint);font-weight:600}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap}
+.chip{
+  padding:7px 14px;border-radius:9px;border:1px solid var(--line);
+  background:transparent;color:var(--text-dim);font-family:inherit;font-size:12px;font-weight:500;
+  cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;
+}
+.chip:hover{border-color:var(--accent);color:var(--text)}
+.chip.active{
+  background:var(--grad-1);color:#0a0e1a;border-color:transparent;font-weight:600;
+  box-shadow:0 0 20px -4px rgba(125,249,255,0.5);
+}
+.divider{width:1px;height:28px;background:var(--line)}
+
+select, input[type=date], input[type=month]{
+  padding:9px 14px;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg-2);color:var(--text);font-family:inherit;font-size:13px;
+  cursor:pointer;outline:none;transition:all 0.2s;
+}
+select:hover, input:hover{border-color:var(--accent)}
+select:focus, input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(125,249,255,0.1)}
+
+/* ========= KPI ROW ========= */
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-bottom:24px}
+.kpi{
+  position:relative;padding:22px 22px 20px;border-radius:18px;
+  background:var(--card);border:1px solid var(--card-border);
+  backdrop-filter:blur(20px);
+  overflow:hidden;transition:all 0.3s cubic-bezier(.4,0,.2,1);
+  cursor:default;
+}
+.kpi::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:18px 18px 0 0;
+  background:var(--accent-grad,var(--grad-1));
+}
+.kpi:hover{transform:translateY(-3px);border-color:rgba(125,249,255,0.2);box-shadow:0 20px 40px -12px rgba(0,0,0,0.4)}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-faint);font-weight:600;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.kpi-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:rgba(125,249,255,0.08);color:var(--accent)}
+.kpi-icon svg{width:14px;height:14px}
+.kpi-value{font-family:'Instrument Serif',serif;font-size:42px;font-weight:400;line-height:1;letter-spacing:-1px;margin-bottom:4px}
+.kpi-unit{font-size:13px;color:var(--text-dim);font-weight:500;margin-left:4px}
+.kpi-meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:11px;color:var(--text-faint);font-family:'JetBrains Mono',monospace}
+.kpi-trend{display:inline-flex;align-items:center;gap:4px;font-weight:600;padding:3px 8px;border-radius:6px}
+.trend-up{background:rgba(52,211,153,0.12);color:var(--accent-5)}
+.trend-down{background:rgba(251,113,133,0.12);color:var(--accent-6)}
+.trend-flat{background:rgba(136,146,184,0.12);color:var(--text-dim)}
+
+.kpi.k1{--accent-grad:var(--grad-2)}
+.kpi.k2{--accent-grad:var(--grad-1)}
+.kpi.k3{--accent-grad:var(--grad-3)}
+.kpi.k4{--accent-grad:var(--grad-4)}
+.kpi.k5{--accent-grad:linear-gradient(135deg,#34d399,#fbbf24)}
+.kpi.k6{--accent-grad:linear-gradient(135deg,#a78bfa,#fb7185)}
+
+/* ========= CHARTS GRID ========= */
+.charts{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;margin-bottom:24px}
+.card{
+  background:var(--card);border:1px solid var(--card-border);border-radius:18px;
+  padding:22px 24px;backdrop-filter:blur(20px);
+  position:relative;overflow:hidden;
+}
+.card-h{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:12px}
+.card-h h3{font-size:14px;font-weight:600;letter-spacing:0.3px}
+.card-h p{font-size:11px;color:var(--text-faint);margin-top:3px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px}
+.card-h .badge{
+  font-size:10px;padding:4px 9px;border-radius:6px;background:rgba(125,249,255,0.08);
+  color:var(--accent);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;
+}
+.chart-wrap{position:relative;height:280px}
+.chart-wrap.tall{height:340px}
+.chart-wrap.short{height:200px}
+
+.col-12{grid-column:span 12}
+.col-8{grid-column:span 8}
+.col-7{grid-column:span 7}
+.col-6{grid-column:span 6}
+.col-5{grid-column:span 5}
+.col-4{grid-column:span 4}
+.col-3{grid-column:span 3}
+
+/* ========= STATS PANEL ========= */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+.stat{
+  padding:12px 14px;border-radius:10px;background:rgba(10,14,26,0.5);border:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:baseline;
+}
+.stat-k{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-faint);font-weight:600}
+.stat-v{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--text)}
+.stat-v.pos{color:var(--accent-5)}
+.stat-v.neg{color:var(--accent-6)}
+
+/* ========= INSIGHT CARDS ========= */
+.insights{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.insight{
+  padding:20px 22px;border-radius:16px;background:var(--card);
+  border:1px solid var(--card-border);backdrop-filter:blur(20px);
+  position:relative;overflow:hidden;
+}
+.insight::before{
+  content:'';position:absolute;top:0;left:0;width:4px;height:100%;
+  background:var(--insight-c,var(--accent));
+}
+.insight.good{--insight-c:var(--accent-5)}
+.insight.warn{--insight-c:var(--accent-4)}
+.insight.bad{--insight-c:var(--accent-6)}
+.insight-tag{font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;color:var(--insight-c,var(--accent));margin-bottom:10px}
+.insight h4{font-size:18px;font-weight:600;margin-bottom:8px;line-height:1.3;font-family:'Instrument Serif',serif;font-weight:400;font-style:italic}
+.insight p{font-size:12px;color:var(--text-dim);line-height:1.6}
+
+/* ========= UPLOAD MODAL ========= */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:20px;
+}
+.modal.show{display:flex}
+.modal-inner{
+  background:var(--bg-1);border:1px solid var(--card-border);border-radius:24px;
+  padding:36px;max-width:540px;width:100%;
+  position:relative;
+  box-shadow:0 30px 80px -10px rgba(0,0,0,0.6);
+}
+.modal-inner h2{font-family:'Instrument Serif',serif;font-size:32px;font-weight:400;margin-bottom:8px}
+.modal-inner h2 em{font-style:italic;background:var(--grad-1);-webkit-background-clip:text;background-clip:text;color:transparent}
+.modal-inner > p{color:var(--text-dim);font-size:13px;margin-bottom:24px;line-height:1.6}
+.dropzone{
+  border:2px dashed var(--line);border-radius:16px;padding:36px;text-align:center;
+  cursor:pointer;transition:all 0.2s;background:rgba(10,14,26,0.4);
+}
+.dropzone:hover, .dropzone.drag{border-color:var(--accent);background:rgba(125,249,255,0.04)}
+.dropzone svg{width:48px;height:48px;color:var(--accent);margin-bottom:12px}
+.dropzone p{font-size:14px;font-weight:500;margin-bottom:4px}
+.dropzone span{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1.5px}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+.close{position:absolute;top:18px;right:18px;background:none;border:none;color:var(--text-dim);cursor:pointer;width:32px;height:32px;border-radius:8px;display:grid;place-items:center}
+.close:hover{background:var(--bg-3);color:var(--text)}
+
+/* ========= TOAST ========= */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--bg-2);border:1px solid var(--accent);border-left:4px solid var(--accent);
+  padding:14px 20px;border-radius:12px;font-size:13px;
+  transform:translateY(100px);opacity:0;transition:all 0.3s;z-index:200;
+  box-shadow:0 20px 40px -10px rgba(0,0,0,0.5);
+  max-width:340px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{border-color:var(--accent-6);border-left-color:var(--accent-6)}
+
+/* ========= FOOTER ========= */
+.footer{
+  margin-top:32px;padding:24px;text-align:center;
+  font-size:11px;color:var(--text-faint);letter-spacing:1.5px;text-transform:uppercase;
+  border-top:1px solid var(--line);
+}
+.footer em{font-family:'Instrument Serif',serif;font-style:italic;text-transform:none;letter-spacing:0;color:var(--text-dim);font-size:13px}
+
+/* ========= STAGGER ANIMATION ========= */
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.kpi, .card, .insight{animation:rise 0.6s cubic-bezier(.4,0,.2,1) backwards}
+.kpi:nth-child(1){animation-delay:.05s}.kpi:nth-child(2){animation-delay:.1s}.kpi:nth-child(3){animation-delay:.15s}
+.kpi:nth-child(4){animation-delay:.2s}.kpi:nth-child(5){animation-delay:.25s}.kpi:nth-child(6){animation-delay:.3s}
+
+/* ========= RESPONSIVE ========= */
+@media(max-width:1200px){
+  .kpi-row{grid-template-columns:repeat(3,1fr)}
+  .col-8,.col-7,.col-6,.col-5,.col-4,.col-3{grid-column:span 12}
+  .insights{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .shell{padding:16px}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .topbar{flex-direction:column;align-items:flex-start;gap:14px}
+  .kpi-value{font-size:32px}
+}
+
+/* Empty state */
+.empty{padding:60px 24px;text-align:center;color:var(--text-faint)}
+.empty svg{width:64px;height:64px;color:var(--accent);opacity:0.4;margin-bottom:16px}
+.empty h3{font-family:'Instrument Serif',serif;font-size:24px;font-weight:400;margin-bottom:8px;color:var(--text)}
+.empty em{font-style:italic;background:var(--grad-1);-webkit-background-clip:text;background-clip:text;color:transparent}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<div class="shell">
+
+  <!-- ============ HEADER ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo"><em>I</em></div>
+      <div class="brand-text">
+        <h1>ITC Haridwar — <em>Utility Intelligence</em></h1>
+        <p>Real-time operational analytics · v2.6</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="btnTpl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        Template
+      </button>
+      <button class="btn btn-primary" id="btnUpload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        Upload Excel
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ FILTER BAR ============ -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Period</span>
+      <div class="chip-row" id="periodChips">
+        <button class="chip" data-p="W">Weekly</button>
+        <button class="chip active" data-p="M">Monthly</button>
+        <button class="chip" data-p="Q">Quarterly</button>
+        <button class="chip" data-p="FY">FY</button>
+        <button class="chip" data-p="CY">CY</button>
+        <button class="chip" data-p="ALL">All</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">From</span>
+      <input type="date" id="fromDate" />
+      <span class="filter-label">To</span>
+      <input type="date" id="toDate" />
+    </div>
+    <div class="divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">Metric</span>
+      <select id="metricSel">
+        <option value="all">All Metrics</option>
+        <option value="boiler">Biomass Boiler</option>
+        <option value="process">Process Water</option>
+        <option value="domestic">Domestic Water</option>
+      </select>
+    </div>
+    <div style="margin-left:auto;font-size:11px;color:var(--text-faint);font-family:'JetBrains Mono',monospace" id="recordCount">0 records loaded</div>
+  </div>
+
+  <!-- ============ KPI ROW ============ -->
+  <section class="kpi-row" id="kpiRow"></section>
+
+  <!-- ============ MAIN CHARTS ============ -->
+  <section class="charts">
+    <!-- Steam trend with min/max band -->
+    <div class="card col-7">
+      <div class="card-h">
+        <div>
+          <h3>Steam Generation Profile</h3>
+          <p>Biomass Boiler · T/h with min-max envelope</p>
+        </div>
+        <span class="badge">Time-series</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chartSteam"></canvas></div>
+    </div>
+
+    <!-- Statistical Distribution -->
+    <div class="card col-5">
+      <div class="card-h">
+        <div>
+          <h3>Statistical Distribution</h3>
+          <p>Avg · Median · Mode · Min · Max</p>
+        </div>
+        <span class="badge">Stats</span>
+      </div>
+      <div class="chart-wrap short"><canvas id="chartStats"></canvas></div>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+
+    <!-- Cost Composition Stacked Vertical -->
+    <div class="card col-6">
+      <div class="card-h">
+        <div>
+          <h3>Cost Composition — Process Water</h3>
+          <p>O&amp;M · Power · Chemical (₹)</p>
+        </div>
+        <span class="badge">Stacked</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chartProcCost"></canvas></div>
+    </div>
+
+    <!-- Cost Composition Stacked Vertical Domestic -->
+    <div class="card col-6">
+      <div class="card-h">
+        <div>
+          <h3>Cost Composition — Domestic Water</h3>
+          <p>O&amp;M · Power · Chemical (₹)</p>
+        </div>
+        <span class="badge">Stacked</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chartDomCost"></canvas></div>
+    </div>
+
+    <!-- Horizontal bar -->
+    <div class="card col-4">
+      <div class="card-h">
+        <div>
+          <h3>Cost Driver Ranking</h3>
+          <p>Total spend by category</p>
+        </div>
+        <span class="badge">Horizontal</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chartHorz"></canvas></div>
+    </div>
+
+    <!-- Pie chart -->
+    <div class="card col-4">
+      <div class="card-h">
+        <div>
+          <h3>Cost Mix</h3>
+          <p>Process vs Domestic share</p>
+        </div>
+        <span class="badge">Donut</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chartPie"></canvas></div>
+    </div>
+
+    <!-- Efficiency Ratio -->
+    <div class="card col-4">
+      <div class="card-h">
+        <div>
+          <h3>Efficiency Ratio</h3>
+          <p>SFR &amp; Cost-per-KL trend</p>
+        </div>
+        <span class="badge">Dual axis</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chartEff"></canvas></div>
+    </div>
+
+    <!-- Productivity / Savings -->
+    <div class="card col-12">
+      <div class="card-h">
+        <div>
+          <h3>Productivity &amp; Savings Index</h3>
+          <p>Week-over-week % change · Above zero = improvement</p>
+        </div>
+        <span class="badge">Variance</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chartVar"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ============ INSIGHTS ============ -->
+  <section class="insights" id="insightBox"></section>
+
+  <div class="footer">
+    <em>Utility Intelligence Platform</em><br/>
+    Best viewed on Chrome / Edge · Data persists in browser session · Built for ITC Limited
+  </div>
+</div>
+
+<!-- ============ UPLOAD MODAL ============ -->
+<div class="modal" id="modal">
+  <div class="modal-inner">
+    <button class="close" id="closeModal">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h2>Upload <em>Utility Data</em></h2>
+    <p>Drop your Excel file (.xlsx / .xls / .csv) following the template format. Dashboard refreshes automatically.</p>
+    <label class="dropzone" id="dz">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+      <p>Drop Excel file here, or click to browse</p>
+      <span>Sheet name: DATA · Headers in row 1</span>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden />
+    </label>
+    <div class="modal-actions">
+      <button class="btn" id="btnTpl2">Download Template</button>
+      <button class="btn btn-primary" id="loadDemo">Load Sample Data</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   DATA MODEL
+   Each row: { date: Date, week: 'W1', month, fy, cy, quarter,
+               sfr, fuel, steam,
+               pw_om, pw_power, pw_chem, pw_vol,
+               dw_om, dw_power, dw_chem, dw_vol }
+   ============================================================ */
+
+const STATE = {
+  raw: [],
+  filtered: [],
+  period: 'M',
+  metric: 'all',
+  charts: {}
+};
+
+const CHART_COLORS = {
+  cyan:'#7df9ff', violet:'#a78bfa', pink:'#f472b6', amber:'#fbbf24',
+  emerald:'#34d399', rose:'#fb7185', sky:'#60a5fa', text:'#e8ecff',
+  dim:'#8892b8', line:'rgba(125,249,255,0.08)'
+};
+
+/* Chart.js global defaults — Power BI feel */
+Chart.defaults.font.family = "'Outfit', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = CHART_COLORS.dim;
+Chart.defaults.borderColor = CHART_COLORS.line;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.padding = 16;
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+Chart.defaults.plugins.legend.labels.boxHeight = 8;
+Chart.defaults.plugins.tooltip.backgroundColor = '#0a0e1a';
+Chart.defaults.plugins.tooltip.borderColor = '#7df9ff';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.padding = 12;
+Chart.defaults.plugins.tooltip.cornerRadius = 10;
+Chart.defaults.plugins.tooltip.titleFont = {size:12, weight:'600'};
+Chart.defaults.plugins.tooltip.bodyFont = {size:11};
+Chart.defaults.plugins.tooltip.titleColor = '#e8ecff';
+Chart.defaults.plugins.tooltip.bodyColor = '#8892b8';
+
+/* ============================================================
+   STATISTICS
+   ============================================================ */
+function stats(arr){
+  const v = arr.filter(x => typeof x === 'number' && !isNaN(x));
+  if(!v.length) return {n:0,sum:0,avg:0,min:0,max:0,median:0,mode:0,stdev:0,range:0};
+  const n=v.length, sum=v.reduce((a,b)=>a+b,0), avg=sum/n;
+  const sorted=[...v].sort((a,b)=>a-b);
+  const min=sorted[0], max=sorted[n-1], range=max-min;
+  const median = n%2 ? sorted[(n-1)/2] : (sorted[n/2-1]+sorted[n/2])/2;
+  // mode (rounded to 2 dp for floats)
+  const freq={};
+  v.forEach(x=>{const k=Math.round(x*100)/100; freq[k]=(freq[k]||0)+1});
+  const mode = +Object.keys(freq).reduce((a,b)=>freq[a]>=freq[b]?a:b);
+  const stdev = Math.sqrt(v.reduce((s,x)=>s+(x-avg)**2,0)/n);
+  return {n,sum,avg,min,max,median,mode,stdev,range};
+}
+
+function pct(a,b){ if(!b) return 0; return ((a-b)/b)*100 }
+function fmt(n,d=1){ if(n==null||isNaN(n)) return '—'; return Number(n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d}) }
+function fmtInt(n){ if(n==null||isNaN(n)) return '—'; return Math.round(n).toLocaleString('en-IN') }
+function fmtCompact(n){ if(n==null||isNaN(n)) return '—'; if(Math.abs(n)>=1e7) return (n/1e7).toFixed(2)+'Cr'; if(Math.abs(n)>=1e5) return (n/1e5).toFixed(2)+'L'; if(Math.abs(n)>=1e3) return (n/1e3).toFixed(1)+'K'; return Math.round(n).toString() }
+
+/* ============================================================
+   SAMPLE DATA — full FY for nice analytics
+   ============================================================ */
+function generateSampleData(){
+  // 52 weeks of plausible data with seasonality + noise
+  const start = new Date(2025,3,1); // Apr 1, 2025 (FY26 start in India)
+  const out = [];
+  for(let i=0;i<52;i++){
+    const d = new Date(start); d.setDate(d.getDate()+i*7);
+    // seasonal sine for steam (higher in winter), random noise
+    const season = Math.sin((i/52)*Math.PI*2 + Math.PI) * 0.4;
+    const noise = ()=>(Math.random()-0.5);
+    const steam = +(4.7 + season + noise()*0.3).toFixed(2);
+    const fuel = +(steam * (1.05 + noise()*0.1)).toFixed(2);
+    const sfr = +(steam/fuel * 100 + noise()*1.5).toFixed(2);
+
+    const pwVol = Math.round(480 + season*60 + noise()*40);
+    const pw_om = Math.round(1750 + noise()*200);
+    const pw_power = Math.round(2700 + noise()*400);
+    const pw_chem = 2550;
+
+    const dwVol = Math.round(1830 + season*120 + noise()*80);
+    const dw_om = Math.round(6900 + noise()*350);
+    const dw_power = Math.round(10800 + noise()*600);
+    const dw_chem = 910;
+
+    out.push({
+      date:d, week:'W'+(i+1),
+      month:d.toLocaleString('en-US',{month:'short',year:'2-digit'}),
+      fy: fyOf(d), cy:d.getFullYear(), quarter:'Q'+(Math.floor(d.getMonth()/3)+1)+' '+d.getFullYear(),
+      sfr, fuel, steam,
+      pw_om, pw_power, pw_chem, pw_vol:pwVol,
+      dw_om, dw_power, dw_chem, dw_vol:dwVol,
+    });
+  }
+  return out;
+}
+function fyOf(d){
+  const m=d.getMonth(), y=d.getFullYear();
+  return m>=3 ? `FY${(y+1).toString().slice(2)}` : `FY${y.toString().slice(2)}`;
+}
+
+/* ============================================================
+   FILTERING
+   ============================================================ */
+function applyFilters(){
+  const from = document.getElementById('fromDate').value;
+  const to = document.getElementById('toDate').value;
+  const fromD = from ? new Date(from) : null;
+  const toD = to ? new Date(to) : null;
+  STATE.filtered = STATE.raw.filter(r=>{
+    if(fromD && r.date < fromD) return false;
+    if(toD && r.date > toD) return false;
+    return true;
+  });
+  // Aggregate by period
+  STATE.aggregated = aggregate(STATE.filtered, STATE.period);
+  document.getElementById('recordCount').textContent = `${STATE.filtered.length} records · ${STATE.aggregated.length} ${labelForPeriod(STATE.period)} buckets`;
+  render();
+}
+
+function labelForPeriod(p){
+  return {W:'weekly',M:'monthly',Q:'quarterly',FY:'fiscal year',CY:'calendar year',ALL:'all-time'}[p];
+}
+
+function aggregate(rows, period){
+  if(period==='W' || period==='ALL'){
+    return rows.map(r => ({ key:r.week+' · '+r.month, ...r }));
+  }
+  const buckets = {};
+  rows.forEach(r=>{
+    let key;
+    if(period==='M') key = r.month;
+    else if(period==='Q') key = r.quarter;
+    else if(period==='FY') key = r.fy;
+    else if(period==='CY') key = String(r.cy);
+    if(!buckets[key]) buckets[key]={key, rows:[], date:r.date};
+    buckets[key].rows.push(r);
+  });
+  return Object.values(buckets).map(b=>{
+    const avg = (k)=> b.rows.reduce((s,x)=>s+(x[k]||0),0)/b.rows.length;
+    const sum = (k)=> b.rows.reduce((s,x)=>s+(x[k]||0),0);
+    return {
+      key:b.key, date:b.date,
+      sfr:avg('sfr'), fuel:sum('fuel'), steam:avg('steam'),
+      pw_om:sum('pw_om'), pw_power:sum('pw_power'), pw_chem:sum('pw_chem'), pw_vol:sum('pw_vol'),
+      dw_om:sum('dw_om'), dw_power:sum('dw_power'), dw_chem:sum('dw_chem'), dw_vol:sum('dw_vol'),
+      n:b.rows.length
+    };
+  });
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  if(!STATE.filtered.length){ renderEmpty(); return; }
+  renderKPIs();
+  renderCharts();
+  renderInsights();
+}
+
+function renderEmpty(){
+  document.getElementById('kpiRow').innerHTML = `<div class="empty col-12" style="grid-column:1/-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><h3>No data <em>loaded</em> yet</h3><p>Upload an Excel file or click "Load Sample Data" to begin</p></div>`;
+}
+
+/* -------- KPIs -------- */
+function renderKPIs(){
+  const f = STATE.filtered;
+  const sSteam = stats(f.map(x=>x.steam));
+  const sSfr = stats(f.map(x=>x.sfr));
+  const sPwCost = stats(f.map(x=> (x.pw_om+x.pw_power+x.pw_chem)/x.pw_vol ));
+  const sDwCost = stats(f.map(x=> (x.dw_om+x.dw_power+x.dw_chem)/x.dw_vol ));
+  const totalWater = f.reduce((s,x)=>s+x.pw_vol+x.dw_vol,0);
+  const totalSpend = f.reduce((s,x)=>s+x.pw_om+x.pw_power+x.pw_chem+x.dw_om+x.dw_power+x.dw_chem,0);
+  // trends: compare last vs first half
+  const half = Math.floor(f.length/2);
+  const firstAvg = (k)=> f.slice(0,half).reduce((s,x)=>s+x[k],0)/Math.max(half,1);
+  const lastAvg = (k)=> f.slice(half).reduce((s,x)=>s+x[k],0)/Math.max(f.length-half,1);
+  const steamTrend = pct(lastAvg('steam'), firstAvg('steam'));
+  const sfrTrend = pct(lastAvg('sfr'), firstAvg('sfr'));
+
+  const kpis = [
+    { cls:'k1', icon:'flame', label:'Avg Steam', value:fmt(sSteam.avg,2), unit:'T/h',
+      meta:`min ${fmt(sSteam.min,2)} · max ${fmt(sSteam.max,2)}`, trend:steamTrend },
+    { cls:'k2', icon:'gauge', label:'Avg SFR', value:fmt(sSfr.avg,2), unit:'%',
+      meta:`σ ${fmt(sSfr.stdev,2)}`, trend:sfrTrend },
+    { cls:'k3', icon:'droplet', label:'Process Water Cost', value:fmt(sPwCost.avg,1), unit:'₹/KL',
+      meta:`med ${fmt(sPwCost.median,1)}`, trend:-pct(lastAvg2(f,'pw_om')+lastAvg2(f,'pw_power'),firstAvg2(f,'pw_om')+firstAvg2(f,'pw_power')) },
+    { cls:'k4', icon:'home', label:'Domestic Water Cost', value:fmt(sDwCost.avg,1), unit:'₹/KL',
+      meta:`med ${fmt(sDwCost.median,1)}`, trend:-pct(lastAvg2(f,'dw_om'),firstAvg2(f,'dw_om')) },
+    { cls:'k5', icon:'water', label:'Total Water Treated', value:fmtCompact(totalWater), unit:'KL',
+      meta:`${f.length} periods`, trend:0 },
+    { cls:'k6', icon:'rupee', label:'Total Utility Spend', value:'₹'+fmtCompact(totalSpend), unit:'',
+      meta:`avg ₹${fmtCompact(totalSpend/Math.max(f.length,1))}/wk`, trend:0 },
+  ];
+
+  document.getElementById('kpiRow').innerHTML = kpis.map(k=>{
+    const trendClass = k.trend > 0.5 ? 'trend-up' : k.trend < -0.5 ? 'trend-down' : 'trend-flat';
+    const trendArrow = k.trend > 0.5 ? '↑' : k.trend < -0.5 ? '↓' : '→';
+    return `<div class="kpi ${k.cls}">
+      <div class="kpi-label">${k.label}<span class="kpi-icon">${iconSvg(k.icon)}</span></div>
+      <div class="kpi-value">${k.value}<span class="kpi-unit">${k.unit}</span></div>
+      <div class="kpi-meta">
+        <span>${k.meta}</span>
+        ${k.trend!==0 ? `<span class="kpi-trend ${trendClass}">${trendArrow} ${Math.abs(k.trend).toFixed(1)}%</span>` : '<span></span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function lastAvg2(f,k){const h=Math.floor(f.length/2);return f.slice(h).reduce((s,x)=>s+x[k],0)/Math.max(f.length-h,1)}
+function firstAvg2(f,k){const h=Math.floor(f.length/2);return f.slice(0,h).reduce((s,x)=>s+x[k],0)/Math.max(h,1)}
+
+function iconSvg(name){
+  const map = {
+    flame:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/></svg>',
+    gauge:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 14l4-4M3.34 19a10 10 0 1117.32 0"/></svg>',
+    droplet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>',
+    home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>',
+    water:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M2 18c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/></svg>',
+    rupee:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12M6 8h12M6 13l8 8M6 13c2 0 6 0 6-5"/></svg>'
+  };
+  return map[name] || '';
+}
+
+/* -------- CHARTS -------- */
+function renderCharts(){
+  Object.values(STATE.charts).forEach(c=>c?.destroy?.());
+  STATE.charts = {};
+  const agg = STATE.aggregated;
+  const labels = agg.map(x=>x.key);
+
+  // 1. Steam profile with min/max envelope
+  const steamSeries = agg.map(x=>x.steam);
+  const stmStats = stats(STATE.filtered.map(x=>x.steam));
+  STATE.charts.steam = new Chart(document.getElementById('chartSteam'),{
+    type:'line',
+    data:{labels, datasets:[
+      { label:'Steam (T/h)', data:steamSeries,
+        borderColor:CHART_COLORS.cyan, backgroundColor:gradient('chartSteam','rgba(125,249,255,0.4)','rgba(125,249,255,0)'),
+        tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:CHART_COLORS.cyan, pointBorderColor:'#0a0e1a', pointBorderWidth:2, borderWidth:2.5
+      },
+      { label:'Average', data:Array(labels.length).fill(stmStats.avg),
+        borderColor:CHART_COLORS.violet, borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false, tension:0
+      },
+      { label:'Maximum', data:Array(labels.length).fill(stmStats.max),
+        borderColor:CHART_COLORS.emerald, borderDash:[2,3], borderWidth:1, pointRadius:0, fill:false, tension:0
+      },
+      { label:'Minimum', data:Array(labels.length).fill(stmStats.min),
+        borderColor:CHART_COLORS.rose, borderDash:[2,3], borderWidth:1, pointRadius:0, fill:false, tension:0
+      }
+    ]},
+    options:baseOpts({y:{title:{display:true,text:'Steam (T/h)',color:CHART_COLORS.dim}}})
+  });
+
+  // 2. Stat distribution bar + side stat grid
+  const allSteam = STATE.filtered.map(x=>x.steam);
+  const ss = stats(allSteam);
+  STATE.charts.stats = new Chart(document.getElementById('chartStats'),{
+    type:'bar',
+    data:{
+      labels:['Min','Mode','Median','Mean','Max'],
+      datasets:[{
+        data:[ss.min,ss.mode,ss.median,ss.avg,ss.max],
+        backgroundColor:[CHART_COLORS.rose,CHART_COLORS.amber,CHART_COLORS.violet,CHART_COLORS.cyan,CHART_COLORS.emerald],
+        borderRadius:8, borderSkipped:false
+      }]
+    },
+    options:baseOpts({},{plugins:{legend:{display:false}}})
+  });
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat"><span class="stat-k">Std Dev</span><span class="stat-v">${fmt(ss.stdev,2)}</span></div>
+    <div class="stat"><span class="stat-k">Range</span><span class="stat-v">${fmt(ss.range,2)}</span></div>
+    <div class="stat"><span class="stat-k">Sample N</span><span class="stat-v">${ss.n}</span></div>
+    <div class="stat"><span class="stat-k">CV %</span><span class="stat-v ${ss.stdev/ss.avg<0.05?'pos':ss.stdev/ss.avg>0.15?'neg':''}">${fmt(ss.stdev/ss.avg*100,2)}</span></div>
+  `;
+
+  // 3. Process water stacked
+  STATE.charts.proc = new Chart(document.getElementById('chartProcCost'),{
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'O&M', data:agg.map(x=>x.pw_om), backgroundColor:CHART_COLORS.cyan, borderRadius:6, borderSkipped:false},
+      {label:'Power', data:agg.map(x=>x.pw_power), backgroundColor:CHART_COLORS.violet, borderRadius:6, borderSkipped:false},
+      {label:'Chemical', data:agg.map(x=>x.pw_chem), backgroundColor:CHART_COLORS.pink, borderRadius:6, borderSkipped:false},
+    ]},
+    options:baseOpts({x:{stacked:true},y:{stacked:true,title:{display:true,text:'Cost (₹)',color:CHART_COLORS.dim}}})
+  });
+
+  // 4. Domestic water stacked
+  STATE.charts.dom = new Chart(document.getElementById('chartDomCost'),{
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'O&M', data:agg.map(x=>x.dw_om), backgroundColor:CHART_COLORS.amber, borderRadius:6, borderSkipped:false},
+      {label:'Power', data:agg.map(x=>x.dw_power), backgroundColor:CHART_COLORS.rose, borderRadius:6, borderSkipped:false},
+      {label:'Chemical', data:agg.map(x=>x.dw_chem), backgroundColor:CHART_COLORS.emerald, borderRadius:6, borderSkipped:false},
+    ]},
+    options:baseOpts({x:{stacked:true},y:{stacked:true,title:{display:true,text:'Cost (₹)',color:CHART_COLORS.dim}}})
+  });
+
+  // 5. Horizontal bar — top cost drivers
+  const totals = {
+    'PW Power':STATE.filtered.reduce((s,x)=>s+x.pw_power,0),
+    'PW O&M':STATE.filtered.reduce((s,x)=>s+x.pw_om,0),
+    'PW Chemical':STATE.filtered.reduce((s,x)=>s+x.pw_chem,0),
+    'DW Power':STATE.filtered.reduce((s,x)=>s+x.dw_power,0),
+    'DW O&M':STATE.filtered.reduce((s,x)=>s+x.dw_om,0),
+    'DW Chemical':STATE.filtered.reduce((s,x)=>s+x.dw_chem,0),
+  };
+  const sortedTotals = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  STATE.charts.horz = new Chart(document.getElementById('chartHorz'),{
+    type:'bar',
+    data:{labels:sortedTotals.map(x=>x[0]), datasets:[{
+      data:sortedTotals.map(x=>x[1]),
+      backgroundColor:[CHART_COLORS.cyan,CHART_COLORS.violet,CHART_COLORS.pink,CHART_COLORS.amber,CHART_COLORS.emerald,CHART_COLORS.rose],
+      borderRadius:6,borderSkipped:false
+    }]},
+    options:baseOpts({},{indexAxis:'y',plugins:{legend:{display:false}}})
+  });
+
+  // 6. Donut
+  const procTotal = STATE.filtered.reduce((s,x)=>s+x.pw_om+x.pw_power+x.pw_chem,0);
+  const domTotal = STATE.filtered.reduce((s,x)=>s+x.dw_om+x.dw_power+x.dw_chem,0);
+  STATE.charts.pie = new Chart(document.getElementById('chartPie'),{
+    type:'doughnut',
+    data:{labels:['Process Water','Domestic Water'],
+      datasets:[{data:[procTotal,domTotal],
+      backgroundColor:[CHART_COLORS.cyan,CHART_COLORS.amber],
+      borderColor:'#0a0e1a',borderWidth:3,hoverOffset:8}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{
+        legend:{position:'bottom',labels:{padding:14,boxWidth:8,boxHeight:8,usePointStyle:true,color:CHART_COLORS.dim}},
+        tooltip:{callbacks:{label:(c)=>` ${c.label}: ₹${fmtCompact(c.parsed)} (${(c.parsed/(procTotal+domTotal)*100).toFixed(1)}%)`}}
+      }
+    }
+  });
+
+  // 7. Efficiency dual axis
+  STATE.charts.eff = new Chart(document.getElementById('chartEff'),{
+    type:'line',
+    data:{labels, datasets:[
+      {label:'SFR %', data:agg.map(x=>x.sfr), borderColor:CHART_COLORS.cyan, backgroundColor:CHART_COLORS.cyan,
+       yAxisID:'y', tension:0.4, pointRadius:3, borderWidth:2},
+      {label:'PW ₹/KL', data:agg.map(x=>(x.pw_om+x.pw_power+x.pw_chem)/x.pw_vol),
+       borderColor:CHART_COLORS.amber, backgroundColor:CHART_COLORS.amber,
+       yAxisID:'y1', tension:0.4, pointRadius:3, borderWidth:2, borderDash:[4,3]}
+    ]},
+    options:baseOpts({
+      y:{position:'left',title:{display:true,text:'SFR %',color:CHART_COLORS.cyan}},
+      y1:{position:'right',title:{display:true,text:'₹/KL',color:CHART_COLORS.amber},grid:{display:false}}
+    })
+  });
+
+  // 8. WoW variance bars
+  const variance = agg.map((x,i)=>{
+    if(i===0) return 0;
+    const prev = agg[i-1];
+    const cur = (x.pw_om+x.pw_power+x.pw_chem)/x.pw_vol;
+    const prv = (prev.pw_om+prev.pw_power+prev.pw_chem)/prev.pw_vol;
+    return -pct(cur,prv); // negative cost change = saving = positive bar
+  });
+  STATE.charts.var = new Chart(document.getElementById('chartVar'),{
+    type:'bar',
+    data:{labels, datasets:[{
+      label:'Savings %', data:variance,
+      backgroundColor:variance.map(v=>v>=0 ? 'rgba(52,211,153,0.7)' : 'rgba(251,113,133,0.7)'),
+      borderColor:variance.map(v=>v>=0 ? CHART_COLORS.emerald : CHART_COLORS.rose),
+      borderWidth:1, borderRadius:6, borderSkipped:false
+    }]},
+    options:baseOpts({y:{title:{display:true,text:'Δ % vs prev period',color:CHART_COLORS.dim}}},{plugins:{legend:{display:false}}})
+  });
+}
+
+function gradient(canvasId, top, bottom){
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const g = ctx.createLinearGradient(0,0,0,300);
+  g.addColorStop(0,top); g.addColorStop(1,bottom);
+  return g;
+}
+
+function baseOpts(scales={},extra={}){
+  return Object.assign({
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{position:'bottom',labels:{padding:14,boxWidth:8,boxHeight:8,usePointStyle:true,color:CHART_COLORS.dim}},
+      tooltip:{callbacks:{label:(c)=>` ${c.dataset.label||''}: ${typeof c.parsed.y==='number'?fmt(c.parsed.y,2):c.parsed}`}}
+    },
+    scales:Object.assign({
+      x:{grid:{color:'rgba(125,249,255,0.04)',drawBorder:false},ticks:{color:CHART_COLORS.dim,maxRotation:0,autoSkipPadding:12}},
+      y:{grid:{color:'rgba(125,249,255,0.06)',drawBorder:false},ticks:{color:CHART_COLORS.dim,callback:(v)=>fmtCompact(v)}}
+    },scales)
+  },extra);
+}
+
+/* -------- INSIGHTS -------- */
+function renderInsights(){
+  const f = STATE.filtered;
+  const ss = stats(f.map(x=>x.steam));
+  const cv = ss.stdev/ss.avg*100;
+  const procCosts = f.map(x=>(x.pw_om+x.pw_power+x.pw_chem)/x.pw_vol);
+  const procStats = stats(procCosts);
+  const domCosts = f.map(x=>(x.dw_om+x.dw_power+x.dw_chem)/x.dw_vol);
+  const domStats = stats(domCosts);
+  // savings: compare best 25% to avg
+  const sortedProc = [...procCosts].sort((a,b)=>a-b);
+  const top25 = sortedProc.slice(0,Math.max(1,Math.floor(sortedProc.length*0.25)));
+  const top25Avg = top25.reduce((s,x)=>s+x,0)/top25.length;
+  const savingsPotential = (procStats.avg-top25Avg) * f.reduce((s,x)=>s+x.pw_vol,0);
+  // power dominance
+  const totalCost = f.reduce((s,x)=>s+x.pw_om+x.pw_power+x.pw_chem+x.dw_om+x.dw_power+x.dw_chem,0);
+  const powerCost = f.reduce((s,x)=>s+x.pw_power+x.dw_power,0);
+  const powerShare = (powerCost/totalCost)*100;
+
+  const insights = [
+    {
+      type: cv<5 ? 'good' : cv>15 ? 'bad' : 'warn',
+      tag: cv<5 ? 'STABLE OPERATION' : cv>15 ? 'HIGH VOLATILITY' : 'MODERATE VARIANCE',
+      title: `Steam output varies by ${cv.toFixed(1)}%`,
+      body: cv<5 ? 'Boiler is running with excellent consistency. Maintain current operating protocols.' :
+            cv>15 ? 'Steam output shows significant fluctuation. Investigate fuel quality, feed rate, and combustion controls to stabilize SFR.' :
+            'Output variance is acceptable but has room to tighten. Review weeks deviating from mean for operational learnings.'
+    },
+    {
+      type:'good',
+      tag:'SAVINGS OPPORTUNITY',
+      title:`₹${fmtCompact(savingsPotential)} achievable`,
+      body:`Replicating top-quartile cost performance (₹${procStats.avg.toFixed(1)}→₹${top25Avg.toFixed(1)}/KL) across all weeks would save approximately ₹${fmtCompact(savingsPotential)} in process water alone. Audit best-performing weeks for repeatable practices.`
+    },
+    {
+      type: powerShare>55 ? 'warn' : 'good',
+      tag: powerShare>55 ? 'POWER DOMINANT' : 'BALANCED MIX',
+      title:`Power = ${powerShare.toFixed(1)}% of utility spend`,
+      body: powerShare>55 ?
+        'Power is the single largest cost lever. Prioritize VFD installations, off-peak scheduling, and pump efficiency audits for outsized impact.' :
+        'Cost mix is well-distributed. Continue parallel optimization across all categories rather than focusing on a single driver.'
+    }
+  ];
+  document.getElementById('insightBox').innerHTML = insights.map(i=>`
+    <div class="insight ${i.type}">
+      <div class="insight-tag">${i.tag}</div>
+      <h4>${i.title}</h4>
+      <p>${i.body}</p>
+    </div>
+  `).join('');
+}
+
+/* ============================================================
+   FILE UPLOAD / TEMPLATE
+   ============================================================ */
+function parseExcel(file){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      const sh = wb.Sheets[wb.SheetNames.includes('DATA')?'DATA':wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sh,{defval:null});
+      if(!rows.length) throw new Error('Empty sheet');
+      const parsed = rows.map(r=>{
+        const d = r.Date ? (r.Date instanceof Date ? r.Date : new Date(r.Date)) : new Date();
+        return {
+          date:d, week:r.Week || ('W'+Math.ceil((d-new Date(d.getFullYear(),0,1))/(7*86400000))),
+          month:d.toLocaleString('en-US',{month:'short',year:'2-digit'}),
+          fy:fyOf(d), cy:d.getFullYear(),
+          quarter:'Q'+(Math.floor(d.getMonth()/3)+1)+' '+d.getFullYear(),
+          sfr:+r.SFR||0, fuel:+r.Fuel||0, steam:+r.Steam||0,
+          pw_om:+r.PW_OM||0, pw_power:+r.PW_Power||0, pw_chem:+r.PW_Chem||0, pw_vol:+r.PW_Vol||1,
+          dw_om:+r.DW_OM||0, dw_power:+r.DW_Power||0, dw_chem:+r.DW_Chem||0, dw_vol:+r.DW_Vol||1
+        };
+      });
+      STATE.raw = parsed;
+      setDefaultDateRange();
+      applyFilters();
+      toast(`Loaded ${parsed.length} records successfully`);
+      document.getElementById('modal').classList.remove('show');
+    }catch(err){
+      toast('Error: '+err.message, true);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function downloadTemplate(){
+  const wb = XLSX.utils.book_new();
+  const data = [
+    ['Date','Week','SFR','Fuel','Steam','PW_OM','PW_Power','PW_Chem','PW_Vol','DW_OM','DW_Power','DW_Chem','DW_Vol'],
+    ['2025-12-01','W1 (1-7th)',82.5,5.85,5.00,1737,2624,2550,450,7145,10793,910,1851],
+    ['2025-12-08','W2 (8-14th)',83.1,5.40,4.62,1722,2624,2550,455,6829,10405,910,1804],
+    ['2025-12-15','W3 (15-21st)',82.8,5.50,4.69,1948,3275,2550,543,6723,11303,910,1874],
+    ['2025-12-22','W4 (22-28th)','','','','','','','','','','',''],
+    ['','','','','','','','','','','','',''],
+    ['INSTRUCTIONS','','','','','','','','','','','',''],
+    ['Date column must be Excel date format','','','','','','','','','','','',''],
+    ['SFR = Steam-Fuel Ratio %','','','','','','','','','','','',''],
+    ['PW_ = Process Water · DW_ = Domestic Water','','','','','','','','','','','',''],
+    ['Vol = Volume in KL · Costs in INR','','','','','','','','','','','',''],
+    ['Add as many rows as needed - dashboard auto-aggregates','','','','','','','','','','','','']
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:12},{wch:14},{wch:8},{wch:8},{wch:8},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws, 'DATA');
+  XLSX.writeFile(wb,'ITC_Utility_Template.xlsx');
+  toast('Template downloaded');
+}
+
+/* ============================================================
+   UI WIRING
+   ============================================================ */
+function setDefaultDateRange(){
+  if(!STATE.raw.length) return;
+  const dates = STATE.raw.map(x=>x.date).sort((a,b)=>a-b);
+  document.getElementById('fromDate').value = dates[0].toISOString().slice(0,10);
+  document.getElementById('toDate').value = dates[dates.length-1].toISOString().slice(0,10);
+}
+
+function toast(msg, isErr=false){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show'+(isErr?' error':'');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+document.querySelectorAll('#periodChips .chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('#periodChips .chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    STATE.period = c.dataset.p;
+    applyFilters();
+  });
+});
+document.getElementById('fromDate').addEventListener('change',applyFilters);
+document.getElementById('toDate').addEventListener('change',applyFilters);
+document.getElementById('metricSel').addEventListener('change',(e)=>{STATE.metric=e.target.value;applyFilters()});
+
+document.getElementById('btnUpload').addEventListener('click',()=>document.getElementById('modal').classList.add('show'));
+document.getElementById('closeModal').addEventListener('click',()=>document.getElementById('modal').classList.remove('show'));
+document.getElementById('btnTpl').addEventListener('click',downloadTemplate);
+document.getElementById('btnTpl2').addEventListener('click',downloadTemplate);
+document.getElementById('loadDemo').addEventListener('click',()=>{
+  STATE.raw = generateSampleData();
+  setDefaultDateRange();
+  applyFilters();
+  document.getElementById('modal').classList.remove('show');
+  toast('Sample dataset loaded · 52 weeks');
+});
+
+const dz = document.getElementById('dz'), fi = document.getElementById('fileInput');
+dz.addEventListener('click',()=>fi.click());
+fi.addEventListener('change',(e)=>{ if(e.target.files[0]) parseExcel(e.target.files[0]); });
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,(e)=>{e.preventDefault();dz.classList.add('drag')}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,(e)=>{e.preventDefault();dz.classList.remove('drag')}));
+dz.addEventListener('drop',(e)=>{ if(e.dataTransfer.files[0]) parseExcel(e.dataTransfer.files[0]); });
+
+/* ============================================================
+   BOOT — load sample data on first paint
+   ============================================================ */
+window.addEventListener('load',()=>{
+  STATE.raw = generateSampleData();
+  setDefaultDateRange();
+  applyFilters();
+  setTimeout(()=>toast('Demo data loaded · Upload your Excel anytime'),700);
+});
+</script>
+</body>
+</html>
