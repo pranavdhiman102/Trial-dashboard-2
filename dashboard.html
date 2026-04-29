@@ -3,327 +3,486 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>COT Dashboard</title>
+<title>COT Operations Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
-
-<!-- Libraries (load from CDN, no install needed) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <style>
-  :root {
-    --bg: #0d0e10;
-    --bg-2: #14161a;
-    --bg-3: #1a1c20;
-    --bg-4: #22252b;
-    --ink: #ececec;
-    --ink-dim: #9a9a9a;
-    --ink-dimmer: #666;
-    --line: #26282d;
-    --line-2: #383b42;
-    --accent: #d4ff3a;
-    --accent-2: #ff6b35;
-    --accent-3: #6ab7ff;
-    --danger: #ff5470;
-    --ok: #4ade80;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Inter Tight', sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    min-height: 100vh;
-  }
+/* ============== POWER BI STYLE COLOR SYSTEM ============== */
+:root[data-theme="light"] {
+  --bg: #f3f2f1;
+  --bg-card: #ffffff;
+  --bg-elev: #faf9f8;
+  --bg-hover: #f3f2f1;
+  --ink: #201f1e;
+  --ink-dim: #605e5c;
+  --ink-mute: #8a8886;
+  --line: #e1dfdd;
+  --line-2: #d2d0ce;
+  --shadow: 0 1.6px 3.6px 0 rgba(0,0,0,0.08), 0 0.3px 0.9px 0 rgba(0,0,0,0.06);
+  --shadow-lg: 0 6.4px 14.4px 0 rgba(0,0,0,0.10), 0 1.2px 3.6px 0 rgba(0,0,0,0.07);
+}
+:root[data-theme="dark"] {
+  --bg: #1b1a19;
+  --bg-card: #252423;
+  --bg-elev: #292827;
+  --bg-hover: #323130;
+  --ink: #f3f2f1;
+  --ink-dim: #c8c6c4;
+  --ink-mute: #8a8886;
+  --line: #3b3a39;
+  --line-2: #484644;
+  --shadow: 0 1.6px 3.6px 0 rgba(0,0,0,0.4);
+  --shadow-lg: 0 6.4px 14.4px 0 rgba(0,0,0,0.5);
+}
+:root {
+  /* Power BI palette — fixed across themes */
+  --c-blue:    #118DFF;
+  --c-teal:    #00B294;
+  --c-yellow:  #FFB900;
+  --c-red:     #E81123;
+  --c-purple:  #8764B8;
+  --c-orange:  #D83B01;
+  --c-pink:    #E3008C;
+  --c-green:   #107C10;
+  --c-cyan:    #00B7C3;
+  --c-magenta: #B146C2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+  transition: background 0.2s, color 0.2s;
+}
 
-  /* TOP BAR */
-  .topbar {
-    position: sticky; top: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 28px;
-    background: var(--bg-2);
-    border-bottom: 1px solid var(--line);
-  }
-  .topbar-left { display: flex; align-items: center; gap: 16px; }
-  .logo {
-    font-family: 'Fraunces', serif; font-size: 20px;
-    font-weight: 500; letter-spacing: -0.01em;
-  }
-  .logo em { color: var(--accent); font-style: italic; }
-  .badge {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    padding: 4px 10px; border: 1px solid var(--line);
-    border-radius: 2px; color: var(--ink-dim);
-  }
-  .topbar-right { display: flex; align-items: center; gap: 16px; }
-  .user-chip {
-    display: flex; flex-direction: column; align-items: flex-end;
-    line-height: 1.2;
-  }
-  .user-chip .name { font-size: 14px; font-weight: 500; }
-  .user-chip .role {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
-  }
-  .btn-logout {
-    padding: 8px 14px; background: transparent;
-    border: 1px solid var(--line); color: var(--ink);
-    font-family: 'Inter Tight', sans-serif; font-size: 13px;
-    cursor: pointer; border-radius: 2px; transition: all 0.2s;
-  }
-  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+/* ============== TOP BAR ============== */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.logo {
+  font-size: 18px; font-weight: 700;
+  letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: 8px;
+}
+.logo-mark {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--c-blue) 0%, var(--c-purple) 100%);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 800; font-size: 13px;
+}
+.tab-bar {
+  display: flex; gap: 4px;
+  margin-left: 24px;
+}
+.tab {
+  padding: 8px 14px;
+  background: transparent;
+  border: none; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  color: var(--ink-dim);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--c-blue); border-bottom-color: var(--c-blue); font-weight: 600; }
+.tab.admin-only { color: var(--c-orange); }
+.tab.admin-only.active { color: var(--c-orange); border-bottom-color: var(--c-orange); }
 
-  /* MAIN LAYOUT */
-  .layout {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    min-height: calc(100vh - 56px);
-  }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.theme-toggle {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-elev); border: 1px solid var(--line);
+  border-radius: 6px; cursor: pointer; font-size: 16px;
+  transition: all 0.15s;
+}
+.theme-toggle:hover { background: var(--bg-hover); }
+.user-chip { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.user-chip .name { font-size: 13px; font-weight: 600; }
+.user-chip .role {
+  font-size: 10px; color: var(--c-blue);
+  text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+}
+.btn-logout {
+  padding: 7px 12px; background: transparent;
+  border: 1px solid var(--line); color: var(--ink);
+  font-family: inherit; font-size: 12px; font-weight: 500;
+  cursor: pointer; border-radius: 4px; transition: all 0.15s;
+}
+.btn-logout:hover { border-color: var(--c-red); color: var(--c-red); }
 
-  /* SIDEBAR — navigation */
-  .sidebar {
-    background: var(--bg-2);
-    border-right: 1px solid var(--line);
-    padding: 20px 0;
-    overflow-y: auto;
-  }
-  .nav-section {
-    padding: 0 20px;
-    margin-bottom: 24px;
-  }
-  .nav-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; text-transform: uppercase;
-    letter-spacing: 0.18em; color: var(--ink-dim);
-    margin-bottom: 10px; padding-left: 4px;
-  }
-  .nav-list { display: flex; flex-direction: column; gap: 2px; }
-  .nav-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 12px;
-    background: transparent; border: 1px solid transparent;
-    color: var(--ink-dim); cursor: pointer;
-    border-radius: 3px; font-size: 13px;
-    transition: all 0.15s;
-  }
-  .nav-item:hover { background: var(--bg-3); color: var(--ink); }
-  .nav-item.active {
-    background: rgba(212,255,58,0.08);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .nav-item .arrow { opacity: 0.5; font-size: 11px; }
-  .nav-item.active .arrow { opacity: 1; }
-  .nav-divider {
-    height: 1px; background: var(--line);
-    margin: 16px 20px;
-  }
-  .breadcrumb {
-    padding: 0 20px; margin-bottom: 8px;
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    color: var(--ink-dimmer); letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
+/* ============== LAYOUT ============== */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: calc(100vh - 53px);
+}
+.sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--line);
+  padding: 16px 0;
+  overflow-y: auto;
+}
+.nav-section { padding: 0 16px; margin-bottom: 18px; }
+.nav-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--ink-mute); margin-bottom: 8px; padding-left: 4px;
+  display: flex; align-items: center; gap: 6px;
+}
+.nav-step {
+  display: inline-block; width: 16px; height: 16px;
+  background: var(--c-blue); color: white;
+  border-radius: 50%; font-size: 9px; font-weight: 700;
+  text-align: center; line-height: 16px;
+}
+.nav-list { display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px;
+  background: transparent; border: 1px solid transparent;
+  color: var(--ink-dim); cursor: pointer;
+  border-radius: 4px; font-size: 13px;
+  transition: all 0.12s;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--ink); }
+.nav-item.active {
+  background: rgba(17,141,255,0.10);
+  border-color: rgba(17,141,255,0.25);
+  color: var(--c-blue);
+  font-weight: 600;
+}
+.nav-item .arrow { opacity: 0.4; font-size: 11px; }
+.nav-item.active .arrow { opacity: 1; }
+.nav-divider { height: 1px; background: var(--line); margin: 12px 16px; }
+.breadcrumb {
+  padding: 0 16px; margin-bottom: 8px;
+  font-size: 10px; color: var(--ink-mute);
+  letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
+}
+.empty-nav { color: var(--ink-mute); font-size: 12px; padding: 6px 10px; font-style: italic; }
 
-  /* MAIN CONTENT */
-  .content {
-    padding: 28px;
-    overflow-y: auto;
-  }
-  .page-title {
-    font-family: 'Fraunces', serif;
-    font-size: 32px; font-weight: 500;
-    letter-spacing: -0.02em; margin-bottom: 4px;
-  }
-  .page-sub {
-    color: var(--ink-dim); font-size: 14px; margin-bottom: 24px;
-  }
+/* ============== CONTENT ============== */
+.content { padding: 20px 24px; overflow-y: auto; }
+.page-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+}
+.page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.page-sub { color: var(--ink-dim); font-size: 13px; margin-top: 2px; }
 
-  /* FILTER BAR */
-  .filterbar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    padding: 20px;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    margin-bottom: 24px;
-  }
-  .filter-group { display: flex; flex-direction: column; gap: 8px; }
-  .filter-group label {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    color: var(--ink-dim);
-  }
-  .filter-group select, .filter-group input {
-    padding: 10px 12px;
-    background: var(--bg-3);
-    border: 1px solid var(--line);
-    color: var(--ink);
-    font-family: 'Inter Tight', sans-serif; font-size: 14px;
-    border-radius: 2px; cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  .filter-group select:focus, .filter-group input:focus {
-    outline: none; border-color: var(--accent);
-  }
+/* ============== FILTER BAR ============== */
+.filterbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.filter-group { display: flex; flex-direction: column; gap: 6px; }
+.filter-group label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-mute);
+}
+.filter-group select, .filter-group input {
+  padding: 8px 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  border-radius: 4px; cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-group select:focus, .filter-group input:focus {
+  outline: none; border-color: var(--c-blue);
+  box-shadow: 0 0 0 3px rgba(17,141,255,0.15);
+}
 
-  /* ACTION BAR */
-  .actionbar {
-    display: flex; gap: 10px; flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 16px;
-    border: 1px solid var(--line);
-    background: var(--bg-3);
-    color: var(--ink);
-    font-family: 'Inter Tight', sans-serif;
-    font-size: 13px; font-weight: 500;
-    cursor: pointer; border-radius: 2px;
-    transition: all 0.15s;
-  }
-  .btn:hover { border-color: var(--accent); color: var(--accent); }
-  .btn.primary { background: var(--accent); color: #0d0e10; border-color: var(--accent); }
-  .btn.primary:hover { background: #c4ed2a; color: #0d0e10; }
-  .btn.danger:hover { border-color: var(--danger); color: var(--danger); }
-  .btn[disabled] { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+/* ============== ACTION BAR ============== */
+.actionbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  background: var(--bg-card); color: var(--ink);
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  cursor: pointer; border-radius: 4px;
+  transition: all 0.15s;
+  box-shadow: var(--shadow);
+}
+.btn:hover { border-color: var(--c-blue); color: var(--c-blue); }
+.btn.primary { background: var(--c-blue); color: white; border-color: var(--c-blue); }
+.btn.primary:hover { background: #0078D4; border-color: #0078D4; color: white; }
+.btn.warn { background: var(--c-orange); color: white; border-color: var(--c-orange); }
+.btn.warn:hover { background: #B83301; border-color: #B83301; color: white; }
+.btn.danger:hover { border-color: var(--c-red); color: var(--c-red); }
 
-  /* KPI CARDS */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  .kpi-card {
-    padding: 20px;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    position: relative;
-    overflow: hidden;
-  }
-  .kpi-card::before {
-    content: ''; position: absolute; top: 0; left: 0;
-    width: 3px; height: 100%; background: var(--accent);
-  }
-  .kpi-card.alt::before { background: var(--accent-2); }
-  .kpi-card.alt2::before { background: var(--accent-3); }
-  .kpi-label {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    color: var(--ink-dim); margin-bottom: 8px;
-  }
-  .kpi-value {
-    font-family: 'Fraunces', serif;
-    font-size: 36px; font-weight: 500; letter-spacing: -0.02em;
-    line-height: 1;
-  }
-  .kpi-unit {
-    font-size: 14px; color: var(--ink-dim);
-    margin-left: 6px; font-family: 'Inter Tight';
-  }
-  .kpi-meta {
-    margin-top: 12px;
-    font-size: 12px; color: var(--ink-dim);
-  }
+/* ============== KPI CARDS ============== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.kpi-card {
+  padding: 16px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 100%; height: 4px;
+}
+.kpi-card.c-blue::before   { background: var(--c-blue); }
+.kpi-card.c-teal::before   { background: var(--c-teal); }
+.kpi-card.c-yellow::before { background: var(--c-yellow); }
+.kpi-card.c-red::before    { background: var(--c-red); }
+.kpi-card.c-purple::before { background: var(--c-purple); }
+.kpi-card.c-orange::before { background: var(--c-orange); }
 
-  /* CHARTS */
-  .chart-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  @media (max-width: 1100px) { .chart-grid { grid-template-columns: 1fr; } }
-  .chart-card {
-    padding: 20px;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-  }
-  .chart-card h3 {
-    font-family: 'Fraunces', serif;
-    font-size: 16px; font-weight: 500;
-    margin-bottom: 16px;
-  }
-  .chart-wrap { position: relative; height: 280px; }
+.kpi-label {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-mute); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.kpi-icon { font-size: 14px; }
+.kpi-value {
+  font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+  line-height: 1.1; color: var(--ink);
+}
+.kpi-unit { font-size: 13px; color: var(--ink-mute); margin-left: 4px; font-weight: 500; }
+.kpi-meta {
+  margin-top: 8px; font-size: 11px; color: var(--ink-dim);
+  display: flex; align-items: center; gap: 8px;
+}
+.delta {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: 700;
+}
+.delta.up   { background: rgba(0,178,148,0.15);  color: var(--c-teal); }
+.delta.down { background: rgba(232,17,35,0.12);  color: var(--c-red); }
+.delta.flat { background: var(--bg-elev); color: var(--ink-mute); }
 
-  /* DATA TABLE */
-  .table-card {
-    padding: 20px;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-  }
-  .table-card h3 {
-    font-family: 'Fraunces', serif;
-    font-size: 16px; font-weight: 500; margin-bottom: 16px;
-  }
-  .data-table {
-    width: 100%; border-collapse: collapse;
-    font-size: 13px;
-  }
-  .data-table th, .data-table td {
-    padding: 10px 12px; text-align: left;
-    border-bottom: 1px solid var(--line);
-  }
-  .data-table th {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; text-transform: uppercase;
-    letter-spacing: 0.12em; color: var(--ink-dim);
-    font-weight: 500;
-  }
-  .data-table td { color: var(--ink); }
-  .data-table tbody tr:hover { background: var(--bg-3); }
+/* ============== CHARTS ============== */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 1100px) { .chart-grid { grid-template-columns: 1fr; } }
+.chart-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 1100px) { .chart-grid-3 { grid-template-columns: 1fr; } }
 
-  /* EMPTY STATE */
-  .empty {
-    padding: 60px 20px; text-align: center;
-    background: var(--bg-2); border: 1px dashed var(--line);
-    border-radius: 4px;
-  }
-  .empty h3 { font-family: 'Fraunces', serif; font-size: 22px; margin-bottom: 8px; }
-  .empty p { color: var(--ink-dim); }
+.chart-card {
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.chart-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.chart-title {
+  font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.chart-color-dot {
+  display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+}
+.chart-meta { font-size: 11px; color: var(--ink-mute); font-weight: 600; }
+.chart-wrap { position: relative; height: 240px; }
+.chart-wrap.tall { height: 300px; }
 
-  /* TOAST */
-  .toast {
-    position: fixed; bottom: 24px; right: 24px;
-    padding: 14px 20px;
-    background: var(--bg-2);
-    border: 1px solid var(--accent);
-    color: var(--ink); font-size: 14px;
-    border-radius: 3px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    transform: translateY(20px); opacity: 0;
-    transition: all 0.3s; z-index: 1000;
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  #fileInput { display: none; }
+/* ============== TABLE ============== */
+.table-card {
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th, .data-table td {
+  padding: 9px 12px; text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.data-table th {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--ink-mute);
+  background: var(--bg-elev);
+  position: sticky; top: 0;
+}
+.data-table tbody tr:hover { background: var(--bg-hover); }
+.data-table td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+.data-table td.muted { color: var(--ink-mute); font-style: italic; }
 
-  /* MOBILE */
-  @media (max-width: 880px) {
-    .layout { grid-template-columns: 1fr; }
-    .sidebar { border-right: none; border-bottom: 1px solid var(--line); }
-    .topbar { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
-    .content { padding: 16px; }
-  }
+/* ============== EMPTY ============== */
+.empty {
+  padding: 60px 20px; text-align: center;
+  background: var(--bg-card); border: 2px dashed var(--line);
+  border-radius: 8px;
+}
+.empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+.empty h3 { font-size: 18px; margin-bottom: 6px; font-weight: 700; }
+.empty p { color: var(--ink-dim); font-size: 13px; }
+
+/* ============== ADMIN PANEL ============== */
+.admin-banner {
+  padding: 14px 18px;
+  background: linear-gradient(90deg, rgba(216,59,1,0.08), rgba(216,59,1,0.02));
+  border: 1px solid rgba(216,59,1,0.3);
+  border-left: 4px solid var(--c-orange);
+  border-radius: 6px; margin-bottom: 16px;
+  font-size: 13px;
+}
+.admin-banner strong { color: var(--c-orange); }
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 880px) { .admin-grid { grid-template-columns: 1fr; } }
+.admin-card {
+  padding: 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.admin-card h3 {
+  font-size: 15px; font-weight: 700; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.admin-form-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
+}
+.admin-form-row label { font-size: 11px; font-weight: 600; color: var(--ink-mute); text-transform: uppercase; letter-spacing: 0.08em; }
+.admin-form-row input, .admin-form-row select {
+  width: 100%; padding: 8px 10px; margin-top: 4px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: inherit; font-size: 13px; border-radius: 4px;
+}
+.audit-list { max-height: 300px; overflow-y: auto; font-size: 12px; }
+.audit-row {
+  padding: 10px; border-bottom: 1px dashed var(--line);
+  display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+}
+.audit-row:last-child { border-bottom: none; }
+.audit-time { color: var(--ink-mute); font-size: 11px; }
+.audit-desc { color: var(--ink); }
+.audit-user { font-weight: 600; color: var(--c-purple); font-size: 11px; }
+
+/* ============== EXPORT MODAL/PANEL ============== */
+.export-panel {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200; align-items: center; justify-content: center;
+}
+.export-panel.show { display: flex; }
+.export-panel-inner {
+  background: var(--bg-card);
+  border-radius: 8px; padding: 24px;
+  max-width: 520px; width: 90%;
+  box-shadow: var(--shadow-lg);
+}
+.export-panel-inner h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.export-panel-inner .desc { color: var(--ink-dim); font-size: 13px; margin-bottom: 16px; }
+.export-form { display: grid; gap: 12px; }
+.export-form label { font-size: 12px; font-weight: 600; color: var(--ink); }
+.export-form input, .export-form select {
+  width: 100%; padding: 10px 12px;
+  background: var(--bg-elev); border: 1px solid var(--line);
+  color: var(--ink); font-family: inherit; font-size: 13px; border-radius: 4px;
+}
+.export-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.export-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+
+/* ============== TOAST ============== */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  padding: 12px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--c-teal);
+  border-left: 4px solid var(--c-teal);
+  color: var(--ink); font-size: 13px; font-weight: 500;
+  border-radius: 4px;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(20px); opacity: 0;
+  transition: all 0.3s; z-index: 1000;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.error { border-color: var(--c-red); border-left-color: var(--c-red); }
+#fileInput { display: none; }
+
+/* ============== HIDE-FOR-ROLE ============== */
+.hide { display: none !important; }
+
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--line); }
+  .topbar { padding: 10px 14px; flex-wrap: wrap; gap: 8px; }
+  .content { padding: 14px; }
+  .tab-bar { margin-left: 0; flex-wrap: wrap; }
+}
 </style>
 </head>
-<body>
+<body data-theme="light">
 
-<!-- TOP BAR -->
+<!-- ============== TOP BAR ============== -->
 <header class="topbar">
   <div class="topbar-left">
-    <div class="logo">COT <em>Ops</em></div>
-    <span class="badge" id="plantBadge">PLANT: ALL</span>
+    <div class="logo">
+      <span class="logo-mark">C</span>
+      <span>COT Ops</span>
+    </div>
+    <div class="tab-bar">
+      <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+      <button class="tab" data-tab="export" onclick="switchTab('export')">📥 Export Data</button>
+      <button class="tab admin-only hide" data-tab="admin" onclick="switchTab('admin')">⚙ Back-Date Editor</button>
+    </div>
   </div>
   <div class="topbar-right">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <span id="themeIcon">🌙</span>
+    </button>
     <div class="user-chip">
       <span class="name" id="userName">—</span>
       <span class="role" id="userRole">—</span>
@@ -334,92 +493,211 @@
 
 <div class="layout">
 
-  <!-- SIDEBAR — Plant > Area > Sub-area > Equipment -->
+  <!-- ============== SIDEBAR ============== -->
   <aside class="sidebar">
     <div class="breadcrumb" id="breadcrumb">— Select to begin —</div>
 
     <div class="nav-section">
-      <div class="nav-label">1. Plant</div>
+      <div class="nav-label"><span class="nav-step">1</span> Plant</div>
       <div class="nav-list" id="plantList"></div>
     </div>
-
     <div class="nav-divider"></div>
 
     <div class="nav-section">
-      <div class="nav-label">2. Area</div>
-      <div class="nav-list" id="areaList">
-        <div style="color:var(--ink-dimmer); font-size:12px; padding: 8px;">Select a plant first</div>
-      </div>
+      <div class="nav-label"><span class="nav-step">2</span> Area</div>
+      <div class="nav-list" id="areaList"><div class="empty-nav">Select a plant first</div></div>
     </div>
-
     <div class="nav-divider"></div>
 
     <div class="nav-section">
-      <div class="nav-label">3. Sub-Area</div>
-      <div class="nav-list" id="subareaList">
-        <div style="color:var(--ink-dimmer); font-size:12px; padding: 8px;">Select an area first</div>
-      </div>
+      <div class="nav-label"><span class="nav-step">3</span> Sub-Area</div>
+      <div class="nav-list" id="subareaList"><div class="empty-nav">Select an area first</div></div>
     </div>
-
     <div class="nav-divider"></div>
 
     <div class="nav-section">
-      <div class="nav-label">4. Equipment</div>
-      <div class="nav-list" id="equipList">
-        <div style="color:var(--ink-dimmer); font-size:12px; padding: 8px;">Select a sub-area first</div>
-      </div>
+      <div class="nav-label"><span class="nav-step">4</span> Equipment</div>
+      <div class="nav-list" id="equipList"><div class="empty-nav">Select a sub-area first</div></div>
     </div>
   </aside>
 
-  <!-- MAIN CONTENT -->
+  <!-- ============== MAIN CONTENT ============== -->
   <main class="content">
-    <h1 class="page-title" id="pageTitle">Operations Dashboard</h1>
-    <p class="page-sub" id="pageSub">Choose a plant, area, sub-area and equipment from the left panel.</p>
 
-    <!-- FILTERS -->
-    <div class="filterbar">
-      <div class="filter-group">
-        <label>Date Range</label>
-        <select id="dateRange">
-          <option value="today">Today</option>
-          <option value="week" selected>This Week</option>
-          <option value="month">This Month</option>
-          <option value="quarter">This Quarter</option>
-          <option value="fy">Financial Year</option>
-          <option value="custom">Custom Range</option>
-        </select>
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title" id="pageTitle">Operations Dashboard</h1>
+          <p class="page-sub" id="pageSub">Choose a plant, area, sub-area and equipment from the left panel.</p>
+        </div>
       </div>
-      <div class="filter-group" id="customStartGroup" style="display:none;">
-        <label>Start Date</label>
-        <input type="date" id="customStart" />
+
+      <div class="filterbar">
+        <div class="filter-group">
+          <label>Date Range</label>
+          <select id="dateRange">
+            <option value="today">Today</option>
+            <option value="week" selected>Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
+            <option value="quarter">Last 90 Days</option>
+            <option value="fy">Financial Year (Apr–Mar)</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        <div class="filter-group" id="customStartGroup" style="display:none;">
+          <label>Start Date</label>
+          <input type="date" id="customStart" />
+        </div>
+        <div class="filter-group" id="customEndGroup" style="display:none;">
+          <label>End Date</label>
+          <input type="date" id="customEnd" />
+        </div>
+        <div class="filter-group">
+          <label>Aggregation</label>
+          <select id="aggregation">
+            <option value="sum">Sum</option>
+            <option value="average" selected>Average (excl. blanks &amp; zeros)</option>
+            <option value="median">Median</option>
+            <option value="min">Minimum</option>
+            <option value="max">Maximum</option>
+          </select>
+        </div>
       </div>
-      <div class="filter-group" id="customEndGroup" style="display:none;">
-        <label>End Date</label>
-        <input type="date" id="customEnd" />
-      </div>
-      <div class="filter-group">
-        <label>Aggregation</label>
-        <select id="aggregation">
-          <option value="sum">Sum</option>
-          <option value="mean" selected>Mean (Average)</option>
-          <option value="median">Median</option>
-          <option value="weighted">Weighted Average</option>
-          <option value="min">Minimum</option>
-          <option value="max">Maximum</option>
-        </select>
+
+      <div class="actionbar" id="actionbar"></div>
+
+      <div id="dashboardArea">
+        <div class="empty">
+          <div class="empty-icon">📊</div>
+          <h3>Pick equipment to view live data.</h3>
+          <p>Use the navigation panel on the left to drill down.</p>
+        </div>
       </div>
     </div>
 
-    <!-- ACTION BAR -->
-    <div class="actionbar" id="actionbar"></div>
+    <!-- TAB 2: EXPORT (everyone with export permission) -->
+    <div id="tab-export" class="hide">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Export Data</h1>
+          <p class="page-sub">Download any equipment's data for any date or date range.</p>
+        </div>
+      </div>
 
-    <!-- DASHBOARD AREA -->
-    <div id="dashboardArea">
-      <div class="empty">
-        <h3>Pick equipment to view live data.</h3>
-        <p>Use the navigation panel on the left to drill down to the equipment you want to analyze.</p>
+      <div class="admin-card">
+        <h3>📥 Build Custom Export</h3>
+        <div class="admin-form-row">
+          <div>
+            <label>Plant</label>
+            <select id="exp_plant" onchange="rebuildExportAreas()"></select>
+          </div>
+          <div>
+            <label>Area</label>
+            <select id="exp_area" onchange="rebuildExportSubareas()"></select>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div>
+            <label>Sub-Area</label>
+            <select id="exp_subarea" onchange="rebuildExportEquipment()"></select>
+          </div>
+          <div>
+            <label>Equipment</label>
+            <select id="exp_equipment"></select>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div>
+            <label>From (dd-mm-yyyy)</label>
+            <input type="date" id="exp_from" />
+          </div>
+          <div>
+            <label>To (dd-mm-yyyy)</label>
+            <input type="date" id="exp_to" />
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="btn primary" onclick="runCustomExport()">📥 Download Excel</button>
+          <button class="btn" onclick="runCustomExportCSV()">📄 Download CSV</button>
+        </div>
+        <div id="exp_preview" style="margin-top: 16px;"></div>
       </div>
     </div>
+
+    <!-- TAB 3: ADMIN BACK-DATE EDITOR (admin only) -->
+    <div id="tab-admin" class="hide">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title" style="color: var(--c-orange);">⚙ Back-Date Editor</h1>
+          <p class="page-sub">Restricted area — modify historical data for any equipment.</p>
+        </div>
+      </div>
+
+      <div class="admin-banner">
+        <strong>⚠ ADMIN-ONLY ZONE.</strong> All edits are logged to the audit trail below. This action cannot be undone.
+      </div>
+
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h3>📝 Modify a Record</h3>
+          <div class="admin-form-row">
+            <div>
+              <label>Plant</label>
+              <select id="ed_plant" onchange="rebuildEditAreas()"></select>
+            </div>
+            <div>
+              <label>Area</label>
+              <select id="ed_area" onchange="rebuildEditSubareas()"></select>
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <div>
+              <label>Sub-Area</label>
+              <select id="ed_subarea" onchange="rebuildEditEquipment()"></select>
+            </div>
+            <div>
+              <label>Equipment</label>
+              <select id="ed_equipment" onchange="loadEditDates()"></select>
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <div>
+              <label>Date (dd-mm-yyyy)</label>
+              <input type="date" id="ed_date" />
+            </div>
+            <div>
+              <label>New Value</label>
+              <input type="number" id="ed_value" step="0.01" placeholder="123.45" />
+            </div>
+          </div>
+          <div style="margin-top: 12px;">
+            <label style="font-size: 11px; font-weight: 600; color: var(--ink-mute); text-transform: uppercase;">Reason for change</label>
+            <input type="text" id="ed_reason" style="width:100%; padding: 8px 10px; margin-top: 4px; background: var(--bg-elev); border: 1px solid var(--line); color: var(--ink); font-family: inherit; font-size: 13px; border-radius: 4px;" placeholder="e.g., Sensor calibration error corrected" />
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 14px;">
+            <button class="btn warn" onclick="saveBackdate()">💾 Save Modification</button>
+            <button class="btn" onclick="clearEditForm()">Reset</button>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <h3>📜 Audit Trail (this session)</h3>
+          <div class="audit-list" id="auditList">
+            <div style="padding: 30px; text-align: center; color: var(--ink-mute); font-style: italic; font-size: 12px;">
+              No modifications yet. Audits from this browser session will appear here.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h3>📋 Equipment Records (preview)</h3>
+        <p style="color: var(--ink-dim); font-size: 12px; margin-bottom: 12px;">Latest 30 entries from the currently selected equipment.</p>
+        <div id="ed_preview"></div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -428,13 +706,13 @@
 
 <script>
 /* =====================================================================
-   AUTH GUARD — kick out if not logged in
+   AUTH GUARD
 ===================================================================== */
 const session = JSON.parse(sessionStorage.getItem('cot_user') || 'null');
 if (!session) window.location.href = 'login.html';
 
 /* =====================================================================
-   PERMISSIONS — what each role can do
+   PERMISSIONS
 ===================================================================== */
 const PERMISSIONS = {
   admin:      { label: 'COT ADMIN',  canRead:true, canUpload:true,  canExport:true, canEdit:true,  canBackdate:true  },
@@ -444,145 +722,121 @@ const PERMISSIONS = {
 const perms = PERMISSIONS[session.role];
 
 /* =====================================================================
-   DATA HIERARCHY — your plants, areas, sub-areas, equipment
-   Edit this freely to match your real plants.
-   Each "equipment" maps to a CSV/Excel file in /data folder.
+   DATA HIERARCHY
 ===================================================================== */
 const HIERARCHY = {
   PCPB: {
     label: 'PCPB',
     areas: {
-      WTP: {
-        label: 'Water Treatment',
-        subareas: {
-          'Process Water':  { equipment: { 'Pump A1':'data/pcpb_wtp_pump_a1.csv', 'Pump A2':'data/pcpb_wtp_pump_a2.csv' } },
-          'Domestic Water': { equipment: { 'Booster Pump':'data/pcpb_wtp_booster.csv' } },
-          'RO Water':       { equipment: { 'RO Module 1':'data/pcpb_wtp_ro1.csv' } }
-        }
-      },
-      Power: {
-        label: 'Power',
-        subareas: {
-          'Main Supply': { equipment: { 'Transformer 1':'data/pcpb_power_tx1.csv' } }
-        }
-      }
+      WTP: { label: 'Water Treatment', subareas: {
+        'Process Water':  { equipment: { 'Pump A1':'data/pcpb_wtp_pump_a1.csv', 'Pump A2':'data/pcpb_wtp_pump_a2.csv' } },
+        'Domestic Water': { equipment: { 'Booster Pump':'data/pcpb_wtp_booster.csv' } },
+        'RO Water':       { equipment: { 'RO Module 1':'data/pcpb_wtp_ro1.csv' } }
+      }},
+      Power: { label: 'Power', subareas: {
+        'Main Supply': { equipment: { 'Transformer 1':'data/pcpb_power_tx1.csv' } }
+      }}
     }
   },
   SNACKS: {
     label: 'Snacks & Noodles',
     areas: {
-      Steam: {
-        label: 'Steam',
-        subareas: {
-          'Steam Generation': { equipment: { 'Boiler 1':'data/snacks_steam_boiler1.csv' } }
-        }
-      },
-      Air: {
-        label: 'Compressed Air',
-        subareas: {
-          'Plant Air': { equipment: { 'Compressor 1':'data/snacks_air_comp1.csv' } }
-        }
-      }
+      Steam: { label: 'Steam', subareas: { 'Steam Generation': { equipment: { 'Boiler 1':'data/snacks_steam_boiler1.csv' } } } },
+      Air:   { label: 'Compressed Air', subareas: { 'Plant Air': { equipment: { 'Compressor 1':'data/snacks_air_comp1.csv' } } } }
     }
   },
   BISCUIT: {
     label: 'Biscuit',
     areas: {
-      WTP: {
-        label: 'Water Treatment',
-        subareas: {
-          'Process Water':  { equipment: { 'Pump B1':'data/biscuit_wtp_pump_b1.csv', 'Pump B2':'data/biscuit_wtp_pump_b2.csv' } },
-          'Domestic Water': { equipment: { 'Storage Tank':'data/biscuit_wtp_storage.csv' } },
-          'RO Water':       { equipment: { 'RO Plant':'data/biscuit_wtp_ro.csv' } }
-        }
-      },
-      Fuel: {
-        label: 'Fuel',
-        subareas: {
-          'Furnace Oil': { equipment: { 'Day Tank':'data/biscuit_fuel_daytank.csv' } }
-        }
-      },
-      Power: {
-        label: 'Power',
-        subareas: {
-          'Main Supply': { equipment: { 'HT Panel':'data/biscuit_power_ht.csv' } }
-        }
-      },
-      HVAC: {
-        label: 'HVAC',
-        subareas: {
-          'Chillers': { equipment: { 'Chiller 1':'data/biscuit_hvac_chiller1.csv' } }
-        }
-      },
-      Steam: {
-        label: 'Steam',
-        subareas: {
-          'Steam Generation': { equipment: { 'Boiler 1':'data/biscuit_steam_boiler1.csv' } }
-        }
-      },
-      Air: {
-        label: 'Compressed Air',
-        subareas: {
-          'Plant Air': { equipment: { 'Compressor 1':'data/biscuit_air_comp1.csv' } }
-        }
-      }
+      WTP: { label: 'Water Treatment', subareas: {
+        'Process Water':  { equipment: { 'Pump B1':'data/biscuit_wtp_pump_b1.csv', 'Pump B2':'data/biscuit_wtp_pump_b2.csv' } },
+        'Domestic Water': { equipment: { 'Storage Tank':'data/biscuit_wtp_storage.csv' } },
+        'RO Water':       { equipment: { 'RO Plant':'data/biscuit_wtp_ro.csv' } }
+      }},
+      Fuel:  { label: 'Fuel',          subareas: { 'Furnace Oil':       { equipment: { 'Day Tank':'data/biscuit_fuel_daytank.csv' } } } },
+      Power: { label: 'Power',         subareas: { 'Main Supply':       { equipment: { 'HT Panel':'data/biscuit_power_ht.csv' } } } },
+      HVAC:  { label: 'HVAC',          subareas: { 'Chillers':          { equipment: { 'Chiller 1':'data/biscuit_hvac_chiller1.csv' } } } },
+      Steam: { label: 'Steam',         subareas: { 'Steam Generation':  { equipment: { 'Boiler 1':'data/biscuit_steam_boiler1.csv' } } } },
+      Air:   { label: 'Compressed Air',subareas: { 'Plant Air':         { equipment: { 'Compressor 1':'data/biscuit_air_comp1.csv' } } } }
     }
   },
   PPB: {
     label: 'PPB',
     areas: {
-      WTP: {
-        label: 'Water Treatment',
-        subareas: {
-          'Process Water': { equipment: { 'Pump P1':'data/ppb_wtp_pump_p1.csv' } }
-        }
-      }
+      WTP: { label: 'Water Treatment', subareas: { 'Process Water': { equipment: { 'Pump P1':'data/ppb_wtp_pump_p1.csv' } } } }
     }
   }
 };
 
 /* =====================================================================
-   STATE — what the user has currently selected
+   STATE
 ===================================================================== */
 const state = {
-  plant: null,
-  area: null,
-  subarea: null,
-  equipment: null,
-  dataFile: null,
-  rawData: [],   // raw rows from file
-  charts: {}     // chart.js instances we'll destroy/recreate
+  plant: null, area: null, subarea: null, equipment: null, dataFile: null,
+  rawData: [], charts: {}, dataCache: {}, auditLog: []
 };
 
 /* =====================================================================
-   POPULATE TOP BAR
+   THEME TOGGLE
+===================================================================== */
+function applyTheme(t) {
+  document.body.setAttribute('data-theme', t);
+  document.getElementById('themeIcon').textContent = t === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('cot_theme', t);
+  // re-render charts (chart text color depends on theme)
+  if (state.equipment && document.getElementById('tab-dashboard').style.display !== 'none') {
+    renderDashboard();
+  }
+}
+function toggleTheme() {
+  const cur = document.body.getAttribute('data-theme');
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
+applyTheme(localStorage.getItem('cot_theme') || 'light');
+
+/* =====================================================================
+   POPULATE TOP BAR & ROLE-BASED HIDING
 ===================================================================== */
 document.getElementById('userName').textContent = session.name;
 document.getElementById('userRole').textContent = perms.label;
-document.getElementById('plantBadge').textContent = 'PLANT: ' + session.plant;
+
+// Show admin tab only to admin
+if (perms.canBackdate) {
+  document.querySelector('.tab[data-tab="admin"]').classList.remove('hide');
+}
 
 /* =====================================================================
-   BUILD ACTION BAR (role-based)
+   ACTION BAR (only for those who have privileges)
 ===================================================================== */
 const actionbar = document.getElementById('actionbar');
-[
-  { label:'Refresh', icon:'↻', enabled: perms.canRead,     action:() => state.equipment && loadEquipmentData(state.dataFile) },
-  { label:'Upload Excel', icon:'↑', enabled: perms.canUpload, primary: perms.canUpload, action: () => document.getElementById('fileInput').click() },
-  { label:'Export to Excel', icon:'↓', enabled: perms.canExport, action: exportToExcel },
-  { label:'Edit Records', icon:'✎', enabled: perms.canEdit, action: () => toast('Edit mode — connect to your backend') },
-  { label:'Modify Back-Dated', icon:'⏱', enabled: perms.canBackdate, danger:true, action: () => { if(confirm('Modify back-dated data? This will be logged.')) toast('Back-date editing enabled'); }}
-].forEach(b => {
+const actions = [];
+if (perms.canRead)   actions.push({ label:'Refresh', icon:'↻',  action:() => state.equipment && loadEquipmentData(state.dataFile) });
+if (perms.canUpload) actions.push({ label:'Upload Excel', icon:'⬆', primary:true, action: () => document.getElementById('fileInput').click() });
+if (perms.canExport) actions.push({ label:'Quick Export (current view)', icon:'⬇', action: exportCurrentView });
+
+actions.forEach(b => {
   const btn = document.createElement('button');
-  btn.className = 'btn' + (b.primary?' primary':'') + (b.danger?' danger':'');
-  if (!b.enabled) btn.disabled = true;
-  btn.innerHTML = `<span class="ico">${b.icon}</span> ${b.label}`;
+  btn.className = 'btn' + (b.primary?' primary':'');
+  btn.innerHTML = `<span>${b.icon}</span> ${b.label}`;
   btn.onclick = b.action;
   actionbar.appendChild(btn);
 });
 
 /* =====================================================================
-   FILTER PLANTS BY USER ROLE
-   Plant users only see their own plant. Admin/COT users see all.
+   TAB SWITCHING
+===================================================================== */
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+  ['dashboard','export','admin'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('hide', t !== tab);
+  });
+  if (tab === 'export') initExportTab();
+  if (tab === 'admin')  initAdminTab();
+}
+
+/* =====================================================================
+   PLANT FILTERING BY ROLE
 ===================================================================== */
 function getVisiblePlants(){
   if (session.plant === 'ALL') return Object.keys(HIERARCHY);
@@ -590,14 +844,41 @@ function getVisiblePlants(){
 }
 
 /* =====================================================================
-   BUILD NAV LISTS
+   DATE HELPERS — Indian dd-mm-yyyy
+===================================================================== */
+function parseIndianDate(s) {
+  // handles dd-mm-yyyy AND yyyy-mm-dd (auto-detect)
+  if (!s) return null;
+  s = String(s).trim();
+  let m;
+  if (m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/)) {
+    return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+  }
+  if (m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)) {
+    return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+  }
+  return null;
+}
+function formatIndianDate(d) {
+  if (!(d instanceof Date) || isNaN(d)) return '';
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  return `${dd}-${mm}-${d.getFullYear()}`;
+}
+function isoFromIndian(s) {
+  const d = parseIndianDate(s);
+  return d ? d.toISOString().slice(0,10) : '';
+}
+
+/* =====================================================================
+   SIDEBAR NAVIGATION
 ===================================================================== */
 function buildPlantList(){
   const list = document.getElementById('plantList');
   list.innerHTML = '';
   const plants = getVisiblePlants();
-  if (plants.length === 0) {
-    list.innerHTML = '<div style="color:var(--ink-dimmer); font-size:12px; padding:8px;">No plants assigned</div>';
+  if (!plants.length) {
+    list.innerHTML = '<div class="empty-nav">No plants assigned</div>';
     return;
   }
   plants.forEach(p => {
@@ -607,27 +888,21 @@ function buildPlantList(){
     item.onclick = () => selectPlant(p, item);
     list.appendChild(item);
   });
-  // auto-select if user is locked to a single plant
   if (plants.length === 1) {
-    const onlyItem = list.firstElementChild;
-    if (onlyItem) selectPlant(plants[0], onlyItem);
+    selectPlant(plants[0], list.firstElementChild);
   }
 }
-
 function selectPlant(plant, el){
   state.plant = plant; state.area = null; state.subarea = null; state.equipment = null;
   document.querySelectorAll('#plantList .nav-item').forEach(i => i.classList.remove('active'));
   el.classList.add('active');
   buildAreaList();
-  document.getElementById('subareaList').innerHTML = '<div style="color:var(--ink-dimmer); font-size:12px; padding:8px;">Select an area first</div>';
-  document.getElementById('equipList').innerHTML = '<div style="color:var(--ink-dimmer); font-size:12px; padding:8px;">Select a sub-area first</div>';
-  updateBreadcrumb();
-  showEmptyState();
+  document.getElementById('subareaList').innerHTML = '<div class="empty-nav">Select an area first</div>';
+  document.getElementById('equipList').innerHTML = '<div class="empty-nav">Select a sub-area first</div>';
+  updateBreadcrumb(); showEmptyState();
 }
-
 function buildAreaList(){
-  const list = document.getElementById('areaList');
-  list.innerHTML = '';
+  const list = document.getElementById('areaList'); list.innerHTML = '';
   const areas = HIERARCHY[state.plant].areas;
   Object.keys(areas).forEach(a => {
     const item = document.createElement('div');
@@ -637,20 +912,16 @@ function buildAreaList(){
     list.appendChild(item);
   });
 }
-
 function selectArea(area, el){
   state.area = area; state.subarea = null; state.equipment = null;
   document.querySelectorAll('#areaList .nav-item').forEach(i => i.classList.remove('active'));
   el.classList.add('active');
   buildSubareaList();
-  document.getElementById('equipList').innerHTML = '<div style="color:var(--ink-dimmer); font-size:12px; padding:8px;">Select a sub-area first</div>';
-  updateBreadcrumb();
-  showEmptyState();
+  document.getElementById('equipList').innerHTML = '<div class="empty-nav">Select a sub-area first</div>';
+  updateBreadcrumb(); showEmptyState();
 }
-
 function buildSubareaList(){
-  const list = document.getElementById('subareaList');
-  list.innerHTML = '';
+  const list = document.getElementById('subareaList'); list.innerHTML = '';
   const subs = HIERARCHY[state.plant].areas[state.area].subareas;
   Object.keys(subs).forEach(s => {
     const item = document.createElement('div');
@@ -660,19 +931,15 @@ function buildSubareaList(){
     list.appendChild(item);
   });
 }
-
 function selectSubarea(sub, el){
   state.subarea = sub; state.equipment = null;
   document.querySelectorAll('#subareaList .nav-item').forEach(i => i.classList.remove('active'));
   el.classList.add('active');
   buildEquipList();
-  updateBreadcrumb();
-  showEmptyState();
+  updateBreadcrumb(); showEmptyState();
 }
-
 function buildEquipList(){
-  const list = document.getElementById('equipList');
-  list.innerHTML = '';
+  const list = document.getElementById('equipList'); list.innerHTML = '';
   const equips = HIERARCHY[state.plant].areas[state.area].subareas[state.subarea].equipment;
   Object.keys(equips).forEach(e => {
     const item = document.createElement('div');
@@ -682,27 +949,24 @@ function buildEquipList(){
     list.appendChild(item);
   });
 }
-
 function selectEquipment(name, file, el){
   state.equipment = name; state.dataFile = file;
   document.querySelectorAll('#equipList .nav-item').forEach(i => i.classList.remove('active'));
   el.classList.add('active');
-  updateBreadcrumb();
-  loadEquipmentData(file);
+  updateBreadcrumb(); loadEquipmentData(file);
 }
-
 function updateBreadcrumb(){
   const parts = [];
-  if (state.plant)   parts.push(HIERARCHY[state.plant].label);
-  if (state.area)    parts.push(HIERARCHY[state.plant].areas[state.area].label);
+  if (state.plant) parts.push(HIERARCHY[state.plant].label);
+  if (state.area) parts.push(HIERARCHY[state.plant].areas[state.area].label);
   if (state.subarea) parts.push(state.subarea);
   if (state.equipment) parts.push(state.equipment);
-  document.getElementById('breadcrumb').textContent = parts.length ? parts.join('  ›  ') : '— Select to begin —';
+  document.getElementById('breadcrumb').textContent = parts.length ? parts.join(' › ') : '— Select to begin —';
 }
-
 function showEmptyState(){
   document.getElementById('dashboardArea').innerHTML = `
     <div class="empty">
+      <div class="empty-icon">📊</div>
       <h3>Pick equipment to view live data.</h3>
       <p>Continue drilling down in the navigation panel.</p>
     </div>`;
@@ -711,34 +975,35 @@ function showEmptyState(){
 }
 
 /* =====================================================================
-   LOAD EQUIPMENT DATA — reads a CSV/Excel file for the equipment
-   Expected columns: Date, Value, (optional) Weight
+   LOAD DATA
 ===================================================================== */
-async function loadEquipmentData(file){
-  document.getElementById('pageTitle').textContent = state.equipment;
-  document.getElementById('pageSub').textContent = `${HIERARCHY[state.plant].label} › ${HIERARCHY[state.plant].areas[state.area].label} › ${state.subarea}`;
-
-  document.getElementById('dashboardArea').innerHTML = `<div class="empty"><h3>Loading data…</h3><p>Reading ${file}</p></div>`;
-
+async function loadDataFile(file) {
+  if (state.dataCache[file]) return state.dataCache[file];
   try {
     const res = await fetch(file);
-    if (!res.ok) {
-      // No real file yet — generate sample data for demo
-      console.warn('Data file not found, using sample data:', file);
-      state.rawData = generateSampleData();
-      toast('Using sample data — add real CSV in /data/ folder');
-    } else {
-      const text = await res.text();
-      state.rawData = parseCSV(text);
-    }
-    renderDashboard();
+    if (!res.ok) throw new Error('not found');
+    const text = await res.text();
+    const data = parseCSV(text);
+    state.dataCache[file] = data;
+    return data;
   } catch(e) {
-    state.rawData = generateSampleData();
-    toast('Using sample data');
-    renderDashboard();
+    const sample = generateSampleData();
+    state.dataCache[file] = sample;
+    return sample;
   }
 }
-
+async function loadEquipmentData(file){
+  document.getElementById('pageTitle').textContent = state.equipment;
+  document.getElementById('pageSub').textContent =
+    `${HIERARCHY[state.plant].label} › ${HIERARCHY[state.plant].areas[state.area].label} › ${state.subarea}`;
+  document.getElementById('dashboardArea').innerHTML =
+    `<div class="empty"><div class="empty-icon">⏳</div><h3>Loading data…</h3><p>${file}</p></div>`;
+  state.rawData = await loadDataFile(file);
+  if (!state.dataCache[file] || state.dataCache[file] === state.rawData) {
+    // sample-loaded message check (rough)
+  }
+  renderDashboard();
+}
 function parseCSV(text){
   const lines = text.trim().split(/\r?\n/);
   const headers = lines[0].split(',').map(h => h.trim());
@@ -749,25 +1014,24 @@ function parseCSV(text){
     return row;
   });
 }
-
 function generateSampleData(){
-  // Generate 365 days of sample data so all date ranges work
   const data = [];
   const now = new Date();
   for (let i = 365; i >= 0; i--){
     const d = new Date(now); d.setDate(d.getDate() - i);
-    const baseValue = 100 + Math.sin(i/14)*30 + Math.random()*40;
-    data.push({
-      Date: d.toISOString().slice(0,10),
-      Value: baseValue.toFixed(2),
-      Weight: (1 + Math.random()*0.5).toFixed(2)
-    });
+    let baseValue;
+    // include some blanks and zeros to test the new average logic
+    const r = Math.random();
+    if (r < 0.04) baseValue = '';     // blank
+    else if (r < 0.07) baseValue = 0; // zero
+    else baseValue = (100 + Math.sin(i/14)*30 + Math.random()*40).toFixed(2);
+    data.push({ Date: formatIndianDate(d), Value: baseValue });
   }
   return data;
 }
 
 /* =====================================================================
-   FILTER + AGGREGATE + RENDER
+   FILTER + AGGREGATE
 ===================================================================== */
 function getDateRange(){
   const range = document.getElementById('dateRange').value;
@@ -779,10 +1043,8 @@ function getDateRange(){
     case 'month':   start = new Date(now); start.setMonth(start.getMonth() - 1); break;
     case 'quarter': start = new Date(now); start.setMonth(start.getMonth() - 3); break;
     case 'fy':
-      // Indian FY: April to March
       const fyStartYear = now.getMonth() < 3 ? now.getFullYear()-1 : now.getFullYear();
-      start = new Date(fyStartYear, 3, 1);
-      break;
+      start = new Date(fyStartYear, 3, 1); break;
     case 'custom':
       const s = document.getElementById('customStart').value;
       const e = document.getElementById('customEnd').value;
@@ -792,133 +1054,278 @@ function getDateRange(){
   }
   return { start, end };
 }
-
-function filterByDate(rows){
-  const {start, end} = getDateRange();
+function filterByDate(rows, start, end){
   return rows.filter(r => {
-    const d = new Date(r.Date);
+    const d = parseIndianDate(r.Date);
+    if (!d) return false;
     return d >= start && d <= end;
   });
 }
+function getValidValues(rows) {
+  // Average excludes blanks AND zeros (your new definition)
+  return rows.map(r => {
+    if (r.Value === '' || r.Value === null || r.Value === undefined) return null;
+    const v = parseFloat(r.Value);
+    return isNaN(v) ? null : v;
+  });
+}
+function aggregate(rawValues, type){
+  // rawValues is an array possibly containing nulls
+  // For SUM: include all numeric (including 0)
+  // For AVERAGE / MEDIAN / MIN: exclude blanks and zeros (your spec)
+  // For MAX: include all
+  const numericAll = rawValues.filter(v => v !== null);
+  const numericNonZero = rawValues.filter(v => v !== null && v !== 0);
 
-function aggregate(values, weights, type){
-  if (!values.length) return 0;
+  if (numericAll.length === 0) return null;
+
   switch(type){
-    case 'sum':    return values.reduce((a,b) => a+b, 0);
-    case 'mean':   return values.reduce((a,b) => a+b, 0) / values.length;
+    case 'sum':     return numericAll.reduce((a,b)=>a+b, 0);
+    case 'average': {
+      if (numericNonZero.length === 0) return null;
+      return numericNonZero.reduce((a,b)=>a+b, 0) / numericNonZero.length;
+    }
     case 'median': {
-      const sorted = [...values].sort((a,b)=>a-b);
+      if (numericNonZero.length === 0) return null;
+      const sorted = [...numericNonZero].sort((a,b)=>a-b);
       const mid = Math.floor(sorted.length/2);
       return sorted.length % 2 ? sorted[mid] : (sorted[mid-1]+sorted[mid])/2;
     }
-    case 'weighted': {
-      const totalW = weights.reduce((a,b)=>a+b, 0);
-      if (totalW === 0) return values.reduce((a,b)=>a+b,0)/values.length;
-      return values.reduce((acc, v, i) => acc + v*weights[i], 0) / totalW;
-    }
-    case 'min': return Math.min(...values);
-    case 'max': return Math.max(...values);
+    case 'min': return numericNonZero.length ? Math.min(...numericNonZero) : null;
+    case 'max': return Math.max(...numericAll);
   }
 }
 
+/* =====================================================================
+   RENDER DASHBOARD
+===================================================================== */
 function renderDashboard(){
   if (!state.rawData.length) { showEmptyState(); return; }
-  const filtered = filterByDate(state.rawData);
+  const {start, end} = getDateRange();
+  const filtered = filterByDate(state.rawData, start, end);
   const aggType = document.getElementById('aggregation').value;
 
-  const values = filtered.map(r => parseFloat(r.Value)).filter(v => !isNaN(v));
-  const weights = filtered.map(r => parseFloat(r.Weight)).map(w => isNaN(w) ? 1 : w);
-  const aggregated = aggregate(values, weights, aggType);
+  if (!filtered.length) {
+    document.getElementById('dashboardArea').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📭</div>
+        <h3>No data in this date range.</h3>
+        <p>Try a different date range or check your data file.</p>
+      </div>`;
+    return;
+  }
 
-  // Group by day for time chart
+  const values = getValidValues(filtered);
+
+  // Compute previous period for delta
+  const periodMs = end - start;
+  const prevStart = new Date(start.getTime() - periodMs);
+  const prevEnd = new Date(start.getTime());
+  const prevFiltered = filterByDate(state.rawData, prevStart, prevEnd);
+  const prevValues = getValidValues(prevFiltered);
+
+  const sumV  = aggregate(values, 'sum');
+  const avgV  = aggregate(values, 'average');
+  const medV  = aggregate(values, 'median');
+  const minV  = aggregate(values, 'min');
+  const maxV  = aggregate(values, 'max');
+  const cntAll = filtered.length;
+  const cntValid = values.filter(v => v !== null && v !== 0).length;
+
+  const prevAgg = aggregate(prevValues, aggType);
+  const curAgg = aggregate(values, aggType);
+  const deltaPct = (prevAgg && prevAgg !== 0) ? ((curAgg - prevAgg) / prevAgg) * 100 : 0;
+
+  // Daily series for trend chart
   const byDay = {};
   filtered.forEach(r => {
     const day = r.Date;
-    if (!byDay[day]) byDay[day] = { values: [], weights: [] };
-    const v = parseFloat(r.Value);
-    if (!isNaN(v)) byDay[day].values.push(v);
-    const w = parseFloat(r.Weight);
-    byDay[day].weights.push(isNaN(w)?1:w);
+    if (!byDay[day]) byDay[day] = [];
+    if (r.Value !== '' && r.Value !== null) {
+      const v = parseFloat(r.Value);
+      if (!isNaN(v)) byDay[day].push(v);
+    }
   });
-  const days = Object.keys(byDay).sort();
-  const dailyValues = days.map(d => aggregate(byDay[d].values, byDay[d].weights, aggType));
+  const days = Object.keys(byDay).sort((a,b) => parseIndianDate(a) - parseIndianDate(b));
+  const dailyValues = days.map(d => {
+    const vals = byDay[d];
+    return aggregate(vals, aggType);
+  });
 
-  // KPIs
-  const sumV = values.reduce((a,b)=>a+b, 0);
-  const minV = values.length ? Math.min(...values) : 0;
-  const maxV = values.length ? Math.max(...values) : 0;
-  const meanV = values.length ? sumV/values.length : 0;
+  // Month-wise comparison
+  const byMonth = {};
+  filtered.forEach(r => {
+    const d = parseIndianDate(r.Date);
+    if (!d) return;
+    const key = `${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+    if (!byMonth[key]) byMonth[key] = [];
+    if (r.Value !== '' && r.Value !== null) {
+      const v = parseFloat(r.Value);
+      if (!isNaN(v)) byMonth[key].push(v);
+    }
+  });
+  const monthLabels = Object.keys(byMonth).sort((a,b) => {
+    const [ma,ya] = a.split('-').map(Number); const [mb,yb] = b.split('-').map(Number);
+    return ya === yb ? ma - mb : ya - yb;
+  });
+  const monthValues = monthLabels.map(m => aggregate(byMonth[m], aggType));
 
-  // Render HTML
+  // Day-of-week pattern
+  const dayOfWeek = [[],[],[],[],[],[],[]];
+  filtered.forEach(r => {
+    const d = parseIndianDate(r.Date);
+    if (!d) return;
+    const v = parseFloat(r.Value);
+    if (!isNaN(v) && v !== 0) dayOfWeek[d.getDay()].push(v);
+  });
+  const dowLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dowValues = dayOfWeek.map(arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0);
+
+  const aggLabel = { sum:'Sum', average:'Average', median:'Median', min:'Minimum', max:'Maximum' }[aggType];
+
   document.getElementById('dashboardArea').innerHTML = `
     <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">${aggType.toUpperCase()} (Selected Filter)</div>
-        <div class="kpi-value">${formatNum(aggregated)}<span class="kpi-unit">units</span></div>
-        <div class="kpi-meta">${filtered.length} records · ${days.length} days</div>
+      <div class="kpi-card c-blue">
+        <div class="kpi-label"><span class="kpi-icon">📐</span> ${aggLabel.toUpperCase()} (Selected)</div>
+        <div class="kpi-value">${formatNum(curAgg)}</div>
+        <div class="kpi-meta">
+          ${deltaBadge(deltaPct)} <span style="color:var(--ink-mute);">vs prior period</span>
+        </div>
       </div>
-      <div class="kpi-card alt">
-        <div class="kpi-label">Min / Max</div>
-        <div class="kpi-value" style="font-size:24px;">${formatNum(minV)} <span style="color:var(--ink-dim);">/</span> ${formatNum(maxV)}</div>
-        <div class="kpi-meta">Range across selected period</div>
+      <div class="kpi-card c-teal">
+        <div class="kpi-label"><span class="kpi-icon">Σ</span> Sum (Total)</div>
+        <div class="kpi-value">${formatNum(sumV)}</div>
+        <div class="kpi-meta">${cntAll} records</div>
       </div>
-      <div class="kpi-card alt2">
-        <div class="kpi-label">Average</div>
-        <div class="kpi-value">${formatNum(meanV)}</div>
-        <div class="kpi-meta">Mean of all values</div>
+      <div class="kpi-card c-purple">
+        <div class="kpi-label"><span class="kpi-icon">x̄</span> Average</div>
+        <div class="kpi-value">${formatNum(avgV)}</div>
+        <div class="kpi-meta">excl. blanks & zeros (${cntValid} valid)</div>
+      </div>
+      <div class="kpi-card c-yellow">
+        <div class="kpi-label"><span class="kpi-icon">↕</span> Min / Max</div>
+        <div class="kpi-value" style="font-size:22px;">${formatNum(minV)} <span style="color:var(--ink-mute); font-weight:400;">/</span> ${formatNum(maxV)}</div>
+        <div class="kpi-meta">range across period</div>
       </div>
     </div>
 
     <div class="chart-grid">
       <div class="chart-card">
-        <h3>Daily Trend (${aggType})</h3>
-        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        <div class="chart-head">
+          <div class="chart-title"><span class="chart-color-dot" style="background:var(--c-blue);"></span> Daily Trend (${aggLabel})</div>
+          <div class="chart-meta">${days.length} days</div>
+        </div>
+        <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
       </div>
       <div class="chart-card">
-        <h3>Distribution</h3>
-        <div class="chart-wrap"><canvas id="distChart"></canvas></div>
+        <div class="chart-head">
+          <div class="chart-title"><span class="chart-color-dot" style="background:var(--c-orange);"></span> Distribution</div>
+          <div class="chart-meta">10 buckets</div>
+        </div>
+        <div class="chart-wrap tall"><canvas id="distChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-grid-3">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title"><span class="chart-color-dot" style="background:var(--c-teal);"></span> Month-wise</div>
+        </div>
+        <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title"><span class="chart-color-dot" style="background:var(--c-purple);"></span> Day-of-Week Avg</div>
+        </div>
+        <div class="chart-wrap"><canvas id="dowChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title"><span class="chart-color-dot" style="background:var(--c-pink);"></span> This vs Prior Period</div>
+        </div>
+        <div class="chart-wrap"><canvas id="cmpChart"></canvas></div>
       </div>
     </div>
 
     <div class="table-card">
-      <h3>Recent Records (latest 10)</h3>
+      <div class="chart-head">
+        <div class="chart-title">📋 Recent Records (latest 12)</div>
+        <div class="chart-meta">Date format: dd-mm-yyyy</div>
+      </div>
       <table class="data-table">
-        <thead><tr><th>Date</th><th>Value</th><th>Weight</th></tr></thead>
+        <thead><tr><th>Date</th><th>Value</th><th>Status</th></tr></thead>
         <tbody>
-          ${filtered.slice(-10).reverse().map(r => `
-            <tr><td>${r.Date}</td><td>${r.Value}</td><td>${r.Weight ?? '—'}</td></tr>`).join('')}
+          ${filtered.slice(-12).reverse().map(r => {
+            const v = parseFloat(r.Value);
+            let status, cls;
+            if (r.Value === '' || r.Value === null || r.Value === undefined) { status = 'BLANK'; cls = 'muted'; }
+            else if (v === 0) { status = 'ZERO (excluded from avg)'; cls = 'muted'; }
+            else if (isNaN(v)) { status = 'INVALID'; cls = 'muted'; }
+            else { status = '✓ valid'; cls = ''; }
+            return `<tr><td>${r.Date}</td><td class="num ${cls}">${r.Value === '' ? '—' : r.Value}</td><td class="${cls}">${status}</td></tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>
   `;
 
-  // Build charts
   buildTrendChart(days, dailyValues);
-  buildDistChart(values);
+  buildDistChart(values.filter(v => v !== null && v !== 0));
+  buildMonthChart(monthLabels, monthValues);
+  buildDowChart(dowLabels, dowValues);
+  buildCmpChart(curAgg, prevAgg, aggLabel);
 }
 
+function deltaBadge(pct){
+  if (pct === null || isNaN(pct) || pct === 0) {
+    return `<span class="delta flat">— 0.0%</span>`;
+  }
+  const cls = pct > 0 ? 'up' : 'down';
+  const arrow = pct > 0 ? '▲' : '▼';
+  return `<span class="delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>`;
+}
+
+/* =====================================================================
+   CHART BUILDERS
+===================================================================== */
+function chartTextColor() {
+  return getComputedStyle(document.body).getPropertyValue('--ink-dim').trim();
+}
+function chartGridColor() {
+  return getComputedStyle(document.body).getPropertyValue('--line').trim();
+}
+function chartOptions(opts = {}){
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: opts.legend !== false, labels: { color: chartTextColor(), font: { size: 11 } } },
+      tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, cornerRadius: 4 }
+    },
+    scales: {
+      x: { ticks: { color: chartTextColor(), maxTicksLimit: opts.maxX || 8, font: { size: 10 } }, grid: { color: chartGridColor(), display: opts.gridX !== false } },
+      y: { ticks: { color: chartTextColor(), font: { size: 10 } }, grid: { color: chartGridColor() }, beginAtZero: opts.beginAtZero || false }
+    }
+  };
+}
 function buildTrendChart(labels, data){
   if (state.charts.trend) state.charts.trend.destroy();
   const ctx = document.getElementById('trendChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,300);
+  grad.addColorStop(0, 'rgba(17,141,255,0.30)');
+  grad.addColorStop(1, 'rgba(17,141,255,0.00)');
   state.charts.trend = new Chart(ctx, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Value',
-        data,
-        borderColor: '#d4ff3a',
-        backgroundColor: 'rgba(212,255,58,0.12)',
-        fill: true, tension: 0.3, pointRadius: 2
-      }]
-    },
-    options: chartOptions()
+    data: { labels, datasets: [{
+      label: 'Value', data,
+      borderColor: '#118DFF', backgroundColor: grad,
+      fill: true, tension: 0.35, pointRadius: 2, pointBackgroundColor: '#118DFF',
+      borderWidth: 2.5
+    }]},
+    options: chartOptions({ legend: false })
   });
 }
-
 function buildDistChart(values){
   if (state.charts.dist) state.charts.dist.destroy();
-  // Simple histogram (10 buckets)
   if (!values.length) return;
   const min = Math.min(...values), max = Math.max(...values);
   const buckets = 10;
@@ -926,9 +1333,7 @@ function buildDistChart(values){
   const counts = new Array(buckets).fill(0);
   const labels = [];
   for (let i = 0; i < buckets; i++){
-    const a = (min + i*step).toFixed(1);
-    const b = (min + (i+1)*step).toFixed(1);
-    labels.push(`${a}–${b}`);
+    labels.push(`${(min + i*step).toFixed(0)}`);
   }
   values.forEach(v => {
     let idx = Math.floor((v - min)/step);
@@ -939,32 +1344,52 @@ function buildDistChart(values){
   const ctx = document.getElementById('distChart').getContext('2d');
   state.charts.dist = new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [{ label:'Count', data: counts, backgroundColor: '#ff6b35' }]
-    },
-    options: chartOptions(true)
+    data: { labels, datasets: [{ label:'Count', data: counts, backgroundColor: '#D83B01', borderRadius: 3 }]},
+    options: chartOptions({ legend: false, maxX: 10, beginAtZero: true })
   });
 }
-
-function chartOptions(hideLegend){
-  return {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: !hideLegend, labels: { color: '#9a9a9a' } } },
-    scales: {
-      x: { ticks: { color: '#9a9a9a', maxTicksLimit: 8 }, grid: { color: '#26282d' } },
-      y: { ticks: { color: '#9a9a9a' }, grid: { color: '#26282d' } }
-    }
-  };
+function buildMonthChart(labels, values){
+  if (state.charts.month) state.charts.month.destroy();
+  const ctx = document.getElementById('monthChart').getContext('2d');
+  state.charts.month = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Month', data: values, backgroundColor: '#00B294', borderRadius: 3 }]},
+    options: chartOptions({ legend: false, beginAtZero: true })
+  });
 }
-
+function buildDowChart(labels, values){
+  if (state.charts.dow) state.charts.dow.destroy();
+  const ctx = document.getElementById('dowChart').getContext('2d');
+  state.charts.dow = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Avg', data: values, backgroundColor: '#8764B8', borderRadius: 3 }]},
+    options: chartOptions({ legend: false, beginAtZero: true })
+  });
+}
+function buildCmpChart(cur, prev, label){
+  if (state.charts.cmp) state.charts.cmp.destroy();
+  const ctx = document.getElementById('cmpChart').getContext('2d');
+  state.charts.cmp = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Prior Period', 'Current Period'],
+      datasets: [{
+        data: [prev || 0, cur || 0],
+        backgroundColor: ['#8a8886', '#E3008C'],
+        borderRadius: 3
+      }]
+    },
+    options: chartOptions({ legend: false, beginAtZero: true, gridX: false })
+  });
+}
 function formatNum(n){
+  if (n === null || isNaN(n)) return '—';
   if (Math.abs(n) >= 1000) return n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-  return n.toFixed(2);
+  return Number(n).toFixed(2);
 }
 
 /* =====================================================================
-   FILTER CHANGE LISTENERS
+   FILTER LISTENERS
 ===================================================================== */
 document.getElementById('dateRange').addEventListener('change', e => {
   const isCustom = e.target.value === 'custom';
@@ -984,43 +1409,261 @@ document.getElementById('fileInput').addEventListener('change', function(e){
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(ev){
-    const data = new Uint8Array(ev.target.result);
-    const wb = XLSX.read(data, { type:'array' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(ws, { raw: false });
-    // Normalize keys
-    state.rawData = json.map(r => ({
-      Date:   r.Date   ?? r.date   ?? r.DATE,
-      Value:  r.Value  ?? r.value  ?? r.VALUE,
-      Weight: r.Weight ?? r.weight ?? r.WEIGHT ?? 1
-    }));
-    toast(`Loaded ${state.rawData.length} rows from ${file.name}`);
-    if (state.equipment) renderDashboard();
+    try {
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, { type:'array', cellDates: false, raw: false });
+      // Use the DATA sheet if present, else first sheet
+      const sheetName = wb.SheetNames.includes('DATA') ? 'DATA' : wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(ws, { raw: false, defval: '' });
+
+      state.rawData = json.map(r => {
+        const dateRaw = r.Date ?? r.date ?? r.DATE;
+        let dateStr = String(dateRaw || '').trim();
+        // Convert any format to dd-mm-yyyy
+        const d = parseIndianDate(dateStr);
+        if (d) dateStr = formatIndianDate(d);
+        return {
+          Date: dateStr,
+          Value: r.Value ?? r.value ?? r.VALUE ?? ''
+        };
+      }).filter(r => r.Date);
+
+      toast(`Loaded ${state.rawData.length} rows from ${file.name}`);
+      if (state.equipment) renderDashboard();
+    } catch(err) {
+      toast('Could not read file. Use the template format.', true);
+    }
   };
   reader.readAsArrayBuffer(file);
 });
 
 /* =====================================================================
-   EXPORT TO EXCEL
+   QUICK EXPORT (current view)
 ===================================================================== */
-function exportToExcel(){
-  if (!state.rawData.length) { toast('No data to export'); return; }
-  const filtered = filterByDate(state.rawData);
+function exportCurrentView(){
+  if (!state.rawData.length) { toast('Pick equipment first', true); return; }
+  const {start, end} = getDateRange();
+  const filtered = filterByDate(state.rawData, start, end);
   const ws = XLSX.utils.json_to_sheet(filtered);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Data');
-  const fname = `${state.plant || 'all'}_${state.equipment || 'data'}_${Date.now()}.xlsx`;
+  const fname = `${state.plant || 'all'}_${state.equipment || 'data'}_${formatIndianDate(new Date()).replace(/-/g,'')}.xlsx`;
   XLSX.writeFile(wb, fname);
   toast(`Exported ${filtered.length} rows`);
+}
+
+/* =====================================================================
+   EXPORT TAB
+===================================================================== */
+function fillSelect(id, options, placeholder) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = '';
+  if (placeholder) {
+    const o = document.createElement('option');
+    o.value = ''; o.textContent = placeholder; o.disabled = true; o.selected = true;
+    sel.appendChild(o);
+  }
+  options.forEach(opt => {
+    const o = document.createElement('option');
+    if (typeof opt === 'string') { o.value = opt; o.textContent = opt; }
+    else { o.value = opt.value; o.textContent = opt.label; }
+    sel.appendChild(o);
+  });
+}
+function initExportTab(){
+  const plants = getVisiblePlants();
+  fillSelect('exp_plant', plants.map(p => ({ value:p, label: HIERARCHY[p].label })), '— Select plant —');
+  fillSelect('exp_area', [], '— Select plant first —');
+  fillSelect('exp_subarea', [], '— Select area first —');
+  fillSelect('exp_equipment', [], '— Select sub-area first —');
+}
+function rebuildExportAreas(){
+  const p = document.getElementById('exp_plant').value;
+  if (!p) return;
+  const areas = HIERARCHY[p].areas;
+  fillSelect('exp_area', Object.keys(areas).map(a => ({ value:a, label: areas[a].label })), '— Select area —');
+  fillSelect('exp_subarea', [], '— Select area first —');
+  fillSelect('exp_equipment', [], '— Select sub-area first —');
+}
+function rebuildExportSubareas(){
+  const p = document.getElementById('exp_plant').value;
+  const a = document.getElementById('exp_area').value;
+  if (!p || !a) return;
+  const subs = HIERARCHY[p].areas[a].subareas;
+  fillSelect('exp_subarea', Object.keys(subs), '— Select sub-area —');
+  fillSelect('exp_equipment', [], '— Select sub-area first —');
+}
+function rebuildExportEquipment(){
+  const p = document.getElementById('exp_plant').value;
+  const a = document.getElementById('exp_area').value;
+  const s = document.getElementById('exp_subarea').value;
+  if (!p || !a || !s) return;
+  const equips = HIERARCHY[p].areas[a].subareas[s].equipment;
+  fillSelect('exp_equipment', Object.keys(equips).map(e => ({ value: equips[e], label: e })), '— Select equipment —');
+}
+async function gatherExportData() {
+  const file = document.getElementById('exp_equipment').value;
+  if (!file) { toast('Pick equipment first', true); return null; }
+  const data = await loadDataFile(file);
+  const fromStr = document.getElementById('exp_from').value;
+  const toStr = document.getElementById('exp_to').value;
+  let start = fromStr ? new Date(fromStr) : new Date(2000,0,1);
+  let end = toStr ? new Date(toStr) : new Date();
+  end.setHours(23,59,59,999);
+  const filtered = filterByDate(data, start, end);
+  return { filtered, start, end };
+}
+async function runCustomExport() {
+  const r = await gatherExportData(); if (!r) return;
+  const {filtered, start, end} = r;
+  if (!filtered.length) { toast('No data in range', true); return; }
+  const ws = XLSX.utils.json_to_sheet(filtered);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Data');
+  const fname = `export_${formatIndianDate(start).replace(/-/g,'')}_to_${formatIndianDate(end).replace(/-/g,'')}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  toast(`Exported ${filtered.length} rows`);
+  // Show preview
+  document.getElementById('exp_preview').innerHTML = `
+    <h3 style="font-size:14px; font-weight:700; margin-bottom:8px;">📋 Preview (first 10 rows)</h3>
+    <table class="data-table"><thead><tr><th>Date</th><th>Value</th></tr></thead><tbody>
+    ${filtered.slice(0,10).map(r => `<tr><td>${r.Date}</td><td class="num">${r.Value || '—'}</td></tr>`).join('')}
+    </tbody></table>
+    <p style="margin-top:8px; color:var(--ink-mute); font-size:11px;">Total: ${filtered.length} rows · Range: ${formatIndianDate(start)} to ${formatIndianDate(end)}</p>`;
+}
+async function runCustomExportCSV() {
+  const r = await gatherExportData(); if (!r) return;
+  const {filtered, start, end} = r;
+  if (!filtered.length) { toast('No data in range', true); return; }
+  const csv = ['Date,Value', ...filtered.map(r => `${r.Date},${r.Value}`)].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `export_${formatIndianDate(start).replace(/-/g,'')}_to_${formatIndianDate(end).replace(/-/g,'')}.csv`;
+  a.click();
+  toast(`Exported ${filtered.length} rows as CSV`);
+}
+
+/* =====================================================================
+   ADMIN BACK-DATE EDITOR
+===================================================================== */
+function initAdminTab(){
+  const plants = Object.keys(HIERARCHY);
+  fillSelect('ed_plant', plants.map(p => ({ value:p, label: HIERARCHY[p].label })), '— Select plant —');
+  fillSelect('ed_area', [], '— Select plant first —');
+  fillSelect('ed_subarea', [], '— Select area first —');
+  fillSelect('ed_equipment', [], '— Select sub-area first —');
+  renderAuditList();
+}
+function rebuildEditAreas(){
+  const p = document.getElementById('ed_plant').value;
+  if (!p) return;
+  fillSelect('ed_area', Object.keys(HIERARCHY[p].areas).map(a => ({ value:a, label: HIERARCHY[p].areas[a].label })), '— Select area —');
+  fillSelect('ed_subarea', [], '— Select area first —');
+  fillSelect('ed_equipment', [], '');
+  document.getElementById('ed_preview').innerHTML = '';
+}
+function rebuildEditSubareas(){
+  const p = document.getElementById('ed_plant').value;
+  const a = document.getElementById('ed_area').value;
+  if (!p || !a) return;
+  fillSelect('ed_subarea', Object.keys(HIERARCHY[p].areas[a].subareas), '— Select sub-area —');
+  fillSelect('ed_equipment', [], '');
+  document.getElementById('ed_preview').innerHTML = '';
+}
+function rebuildEditEquipment(){
+  const p = document.getElementById('ed_plant').value;
+  const a = document.getElementById('ed_area').value;
+  const s = document.getElementById('ed_subarea').value;
+  if (!p || !a || !s) return;
+  const equips = HIERARCHY[p].areas[a].subareas[s].equipment;
+  fillSelect('ed_equipment', Object.keys(equips).map(e => ({ value: equips[e], label: e })), '— Select equipment —');
+}
+async function loadEditDates() {
+  const file = document.getElementById('ed_equipment').value;
+  if (!file) return;
+  const data = await loadDataFile(file);
+  const recent = data.slice(-30).reverse();
+  document.getElementById('ed_preview').innerHTML = `
+    <table class="data-table"><thead><tr><th>Date</th><th>Value</th></tr></thead><tbody>
+    ${recent.map(r => `<tr><td>${r.Date}</td><td class="num">${r.Value || '—'}</td></tr>`).join('')}
+    </tbody></table>`;
+}
+function saveBackdate(){
+  const p = document.getElementById('ed_plant').value;
+  const a = document.getElementById('ed_area').value;
+  const s = document.getElementById('ed_subarea').value;
+  const eName = document.getElementById('ed_equipment').selectedOptions[0]?.textContent;
+  const eFile = document.getElementById('ed_equipment').value;
+  const dateRaw = document.getElementById('ed_date').value;
+  const newVal = document.getElementById('ed_value').value;
+  const reason = document.getElementById('ed_reason').value;
+
+  if (!p || !a || !s || !eFile || !dateRaw || newVal === '' || !reason) {
+    toast('All fields required, including reason', true); return;
+  }
+
+  // Update in-memory data cache
+  const cache = state.dataCache[eFile];
+  if (cache) {
+    const indianDate = formatIndianDate(new Date(dateRaw));
+    let updated = false;
+    for (let i = 0; i < cache.length; i++) {
+      if (cache[i].Date === indianDate) {
+        cache[i].Value = parseFloat(newVal).toFixed(2);
+        updated = true; break;
+      }
+    }
+    if (!updated) {
+      cache.push({ Date: indianDate, Value: parseFloat(newVal).toFixed(2) });
+    }
+  }
+
+  // Audit log
+  state.auditLog.unshift({
+    time: new Date(),
+    user: session.username,
+    desc: `${HIERARCHY[p].label} › ${eName} › ${formatIndianDate(new Date(dateRaw))} = ${newVal}`,
+    reason
+  });
+  renderAuditList();
+  loadEditDates();
+
+  toast('Modification saved (in-memory). Audit logged.');
+  clearEditForm();
+}
+function clearEditForm(){
+  document.getElementById('ed_date').value = '';
+  document.getElementById('ed_value').value = '';
+  document.getElementById('ed_reason').value = '';
+}
+function renderAuditList(){
+  const list = document.getElementById('auditList');
+  if (!state.auditLog.length) {
+    list.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--ink-mute); font-style: italic; font-size: 12px;">No modifications yet. Audits from this browser session will appear here.</div>`;
+    return;
+  }
+  list.innerHTML = state.auditLog.map(a => `
+    <div class="audit-row">
+      <div class="audit-time">${formatIndianDate(a.time)}<br/>${a.time.toTimeString().slice(0,5)}</div>
+      <div>
+        <div class="audit-desc">${a.desc}</div>
+        <div style="font-size:11px; color:var(--ink-mute); margin-top:2px;">📝 ${a.reason}</div>
+      </div>
+      <div class="audit-user">${a.user}</div>
+    </div>`).join('');
 }
 
 /* =====================================================================
    LOGOUT + UTILS
 ===================================================================== */
 function logout(){ sessionStorage.removeItem('cot_user'); window.location.href = 'login.html'; }
-function toast(msg){
+function toast(msg, isError){
   const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2400);
 }
 
